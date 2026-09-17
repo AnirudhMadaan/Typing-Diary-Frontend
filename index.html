@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d0b12" />
+    <meta
+      name="description"
+      content="Typing Diary is a calm, private space to write and improve your typing."
+    />
+    <title>Typing Diary — Write. Type. Remember.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:wght@500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+
+    <main id="authView" class="auth-view" hidden>
+      <section class="auth-art" aria-label="Typing Diary introduction">
+        <div class="brand brand-on-art">
+          <span class="brand-mark">✦</span>
+          <span class="brand-name">Typing Diary</span>
+        </div>
+        <div class="art-copy">
+          <span class="eyebrow">A quieter way to reflect</span>
+          <h1>Make room<br /><em>for your thoughts.</em></h1>
+          <p>Write a little. Notice a little more. Your private space for daily stories and steady progress.</p>
+        </div>
+        <div class="art-note">
+          <span class="note-line"></span>
+          <span>Write · Type · Remember</span>
+        </div>
+      </section>
+      <section class="auth-panel">
+        <div class="auth-panel-inner">
+          <div class="mobile-brand brand">
+            <span class="brand-mark">✦</span>
+            <span class="brand-name">Typing Diary</span>
+          </div>
+          <div class="auth-heading">
+            <span class="eyebrow">YOUR PERSONAL SPACE</span>
+            <h2 id="authTitle">Welcome back</h2>
+            <p id="authSubtitle">Sign in to continue your story.</p>
+          </div>
+          <form id="authForm" class="auth-form">
+            <label id="nameField" class="field" hidden>
+              <span>Your name</span>
+              <input id="nameInput" type="text" autocomplete="name" placeholder="How should we call you?" />
+            </label>
+            <label class="field">
+              <span>Email address</span>
+              <input id="emailInput" type="email" autocomplete="email" placeholder="you@example.com" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <span class="password-input">
+                <input id="passwordInput" type="password" autocomplete="current-password" placeholder="8+ characters" required />
+                <button id="passwordToggle" class="input-action" type="button" aria-label="Show password">Show</button>
+              </span>
+            </label>
+            <button class="button button-primary button-large" type="submit">
+              <span id="authSubmitLabel">Sign in</span>
+              <span class="button-arrow">→</span>
+            </button>
+            <p id="authError" class="form-error" role="alert"></p>
+          </form>
+          <div class="auth-divider"><span>or</span></div>
+          <p class="auth-switch">
+            <span id="authSwitchPrompt">New here?</span>
+            <button id="authSwitch" class="text-button" type="button">Create an account</button>
+          </p>
+          <p class="auth-privacy">Your diary is saved to your account and never shared.</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="appView" class="app-view" hidden>
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Typing Diary home">
+          <span class="brand-mark">✦</span>
+          <span>
+            <span class="brand-name">Typing Diary</span>
+            <small>Write · Type · Remember</small>
+          </span>
+        </a>
+        <div class="topbar-actions">
+          <button id="themeButton" class="icon-button" type="button" title="Toggle theme" aria-label="Toggle theme">☾</button>
+          <button id="customizeButton" class="secondary-button" type="button">⚙ Customize</button>
+          <button id="newEntryButton" class="button button-primary" type="button">＋ New entry</button>
+          <button id="profileButton" class="profile-button" type="button" aria-label="Open account menu">
+            <span id="profileInitials">TD</span>
+            <span class="profile-chevron">⌄</span>
+          </button>
+          <div id="profileMenu" class="profile-menu" hidden>
+            <strong id="profileName">Writer</strong>
+            <span id="profileEmail">you@example.com</span>
+            <button id="logoutButton" class="menu-item" type="button">↪ Sign out</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="welcome-row">
+          <div>
+            <span class="eyebrow">YOUR PERSONAL SPACE</span>
+            <h1>Write your story,<br /><em>one day at a time.</em></h1>
+            <p>Turn daily thoughts into memories while improving your typing rhythm.</p>
+          </div>
+          <div class="today-chip">
+            <span class="today-dot"></span>
+            <span id="todayLabel">Thursday, September 17</span>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Diary statistics">
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-warm">✦</span>
+            <div><span class="stat-label">STREAK</span><strong id="streakStat">0</strong><small>days</small></div>
+            <span class="stat-trend">Keep going</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-purple">↗</span>
+            <div><span class="stat-label">BEST WPM</span><strong id="bestWpmStat">0</strong><small>WPM</small></div>
+            <span class="stat-trend">Personal best</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-blue">✎</span>
+            <div><span class="stat-label">TOTAL WORDS</span><strong id="totalWordsStat">0</strong><small>words</small></div>
+            <span class="stat-trend">Across all entries</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon stat-icon-pink">▤</span>
+            <div><span class="stat-label">ENTRIES</span><strong id="entriesStat">0</strong><small>saved</small></div>
+            <span class="stat-trend">Your archive</span>
+          </article>
+        </section>
+
+        <section class="workspace-grid">
+          <article id="editorCard" class="editor-card page-lined">
+            <div class="editor-toolbar">
+              <div class="day-marker">
+                <span class="day-kicker">DAY</span>
+                <strong id="dayNumber">01</strong>
+              </div>
+              <div class="editor-date">
+                <span id="entryDate">Today</span>
+                <span class="save-dot" id="saveDot"></span>
+                <span id="saveStatus">Ready to write</span>
+              </div>
+              <button id="resetEntryButton" class="quiet-button" type="button" title="Start a fresh entry">Reset</button>
+            </div>
+            <div class="mood-row">
+              <span class="field-caption">How are you feeling?</span>
+              <div class="mood-buttons" role="group" aria-label="Choose a mood">
+                <button class="mood-button" data-mood="Thoughtful" type="button">◌ Thoughtful</button>
+                <button class="mood-button" data-mood="Calm" type="button">⌁ Calm</button>
+                <button class="mood-button" data-mood="Energized" type="button">↯ Energized</button>
+                <button class="mood-button" data-mood="Grateful" type="button">♡ Grateful</button>
+              </div>
+            </div>
+            <input id="titleInput" class="entry-title-input" type="text" maxlength="140" placeholder="Give this entry a title..." />
+            <textarea id="editor" class="editor-textarea font-dm-sans" maxlength="50000" placeholder="What is on your mind today? Start typing..."></textarea>
+            <div class="typing-toolbar">
+              <div class="typing-metrics">
+                <span><strong id="wordCount">0</strong> words</span>
+                <span class="metric-divider"></span>
+                <span><strong id="wpmCount">0</strong> WPM</span>
+                <span class="metric-divider"></span>
+                <span class="timer-icon">◷</span><strong id="timer">00:00</strong>
+              </div>
+              <button id="saveButton" class="button button-primary" type="button">Save entry <span>↗</span></button>
+            </div>
+          </article>
+
+          <aside class="prompt-card">
+            <div class="prompt-spark">✦</div>
+            <span class="eyebrow">A SMALL PROMPT</span>
+            <p id="promptText">What made today feel like yours?</p>
+            <button id="newPromptButton" class="prompt-link" type="button">Give me another <span>↗</span></button>
+          </aside>
+        </section>
+
+        <section class="entries-section">
+          <div class="section-heading">
+            <div><span class="eyebrow">YOUR ARCHIVE</span><h2>Recent entries <span id="entryCountLabel">0</span></h2></div>
+            <label class="search-box"><span>⌕</span><input id="entrySearch" type="search" placeholder="Search entries..." /></label>
+          </div>
+          <div id="entriesList" class="entries-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="customizeModal" class="modal-backdrop" hidden>
+      <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="modal-heading"><div><span class="eyebrow">YOUR SPACE</span><h2 id="settingsTitle">Customize your diary</h2></div><button id="closeCustomize" class="close-button" type="button" aria-label="Close">×</button></div>
+        <div class="settings-content">
+          <label class="setting-control"><span>Writing font</span><select id="fontSelect"><option value="dm">DM Sans</option><option value="lora">Lora</option><option value="playfair">Playfair Display</option><option value="caveat">Caveat</option><option value="mono">Roboto Mono</option></select></label>
+          <div class="setting-control"><span>Page style</span><div class="page-style-options"><button data-page-style="lined" class="page-style active" type="button">Lined</button><button data-page-style="paper" class="page-style" type="button">Paper</button><button data-page-style="blank" class="page-style" type="button">Blank</button></div></div>
+          <div class="setting-control setting-switch"><span><strong>Show writing guide</strong><small>Keep soft lines behind your text</small></span><label class="switch"><input id="linesToggle" type="checkbox" checked /><span></span></label></div>
+        </div>
+        <button id="resetSettings" class="reset-link" type="button">Reset appearance</button>
+      </section>
+    </div>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
