@@ -282,6 +282,20 @@ async function deleteEntry(id) {
   }
 }
 
+async function deleteAccount() {
+  if (!window.confirm("Are you sure you want to delete your account? All your diary entries will be permanently erased.")) {
+    return;
+  }
+  try {
+    await request("/api/auth/me", { method: "DELETE" });
+    state.user = null;
+    showAuth();
+    showToast("Account deleted successfully.");
+  } catch (error) {
+    showToast(error.message, "error");
+  }
+}
+
 async function handleAuth(event) {
   event.preventDefault();
   authError.textContent = "";
@@ -333,6 +347,7 @@ function bindEvents() {
     state.user = null;
     showAuth();
   });
+  if ($("deleteAccountBtn")) $("deleteAccountBtn").addEventListener("click", deleteAccount);
   $("customizeButton").addEventListener("click", () => { $("customizeModal").hidden = false; });
   $("closeCustomize").addEventListener("click", () => { $("customizeModal").hidden = true; });
   $("customizeModal").addEventListener("click", (event) => { if (event.target === $("customizeModal")) $("customizeModal").hidden = true; });
