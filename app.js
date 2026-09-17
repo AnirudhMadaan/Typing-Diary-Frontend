@@ -14,7 +14,7 @@ const state = {
 const API_BASE = window.TYPING_DIARY_API_URL ||
   (window.location.port === "8080" || window.location.pathname.startsWith("/api")
     ? ""
-    : "http://localhost:8080");
+    : "https://typing-diary-backend.vercel.app");
 
 const $ = (id) => document.getElementById(id);
 const authView = $("authView");
