@@ -498,23 +498,15 @@ body.compact-writing .mood-row { margin-top:9px; }
 @media(max-width:760px){ .preset-grid{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:460px){ .custom-color-row{align-items:flex-start; flex-direction:column}.preset-grid{grid-template-columns:1fr} }
 
-/* ===== Palette engine final fix =====
-   Dark mode now follows the selected palette instead of the legacy forest accent. */
-:root { --active-accent: #176b4d; --active-accent-strong: #0f553b; }
-body:not(.light) {
-  --accent: var(--active-accent);
-  --accent-strong: var(--active-accent-strong);
-}
-body.light {
-  --accent: var(--active-accent);
-  --accent-strong: var(--active-accent-strong);
-}
-body:not(.light) .button-primary { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 45%, transparent); }
-body:not(.light) .brand-mark { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 45%, transparent); }
-body:not(.light) .page-lined .editor-textarea { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc((var(--editor-font-size) * var(--editor-line-height)) - 1px), color-mix(in srgb, var(--accent) 34%, transparent) calc(var(--editor-font-size) * var(--editor-line-height)), transparent calc((var(--editor-font-size) * var(--editor-line-height)) + 1px)); }
-.palette-card[data-palette="forest"] i { background:#176b4d; }
-.palette-card[data-palette="ink"] i { background:#b7772d; }
-.palette-card[data-palette="ocean"] i { background:#287b91; }
-.palette-card[data-palette="rose"] i { background:#a55267; }
-.palette-card[data-palette="lavender"] i { background:#715e9d; }
-.palette-card[data-palette="sunset"] i { background:#a65d35; }
+/* Customize studio: page-scoped vs diary-wide controls */
+.settings-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:20px; padding:5px; border:1px solid var(--line); background:var(--bg-raised); }
+.settings-tab { display:grid; grid-template-columns:auto 1fr; column-gap:8px; align-items:center; padding:11px 13px; border:1px solid transparent; color:var(--muted); background:transparent; text-align:left; font-size:11px; }
+.settings-tab span { grid-row:span 2; color:var(--accent); font-size:15px; }
+.settings-tab small { grid-column:2; color:var(--faint); font:9px "Roboto Mono",monospace; margin-top:2px; }
+.settings-tab.active { border-color:var(--accent); color:var(--text); background:var(--panel); box-shadow:2px 2px 0 var(--accent); }
+.entry-style-history { display:flex; align-items:center; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.style-label { padding:3px 5px; border:1px solid var(--accent); color:var(--accent); font:8px "Roboto Mono",monospace; letter-spacing:.08em; }
+.style-label.global { border-color:var(--line); color:var(--muted); margin-left:4px; }
+.style-chip { padding:3px 6px; border:1px solid var(--line); color:var(--muted); background:var(--bg-raised); font:8px "Roboto Mono",monospace; text-transform:capitalize; }
+.global-chip { border-style:dashed; }
+@media(max-width:600px){ .settings-tabs{grid-template-columns:1fr}.entry-style-history{gap:4px}.style-label.global{margin-left:2px} }

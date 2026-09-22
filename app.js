@@ -20,6 +20,7 @@ const state = {
   align: localStorage.getItem("typingDiaryAlign") || "left",
   wordGoal: Number(localStorage.getItem("typingDiaryWordGoal") || 500),
   compact: localStorage.getItem("typingDiaryCompact") === "true",
+  settingsTab: "page",
 };
 
 const API_BASE = window.TYPING_DIARY_API_URL ||
@@ -81,6 +82,7 @@ async function request(url, options = {}) {
 function getPaletteColor(name) {
   return ({ forest:"#176b4d", ink:"#b7772d", ocean:"#287b91", rose:"#a55267", lavender:"#715e9d", sunset:"#a65d35" })[name] || "#176b4d";
 }
+function getPaletteColorName(name) { return ({forest:"Forest", ink:"Ink", ocean:"Ocean", rose:"Rose", lavender:"Lavender", sunset:"Sunset"})[name] || "Forest"; }
 
 function applyPreset(name) {
   const presets = {
@@ -93,6 +95,43 @@ function applyPreset(name) {
   persistAppearance(); applyAppearance(); showToast(`${name.replace(/(^|\s)\S/g,m=>m.toUpperCase())} preset applied.`);
 }
 
+function getPageProfiles() {
+  try { return JSON.parse(localStorage.getItem("typingDiaryPageProfiles") || "{}"); } catch { return {}; }
+}
+
+function getPageProfile() {
+  return { font: state.font, pageStyle: state.pageStyle, fontSize: state.fontSize, lineHeight: state.lineHeight, editorWidth: state.editorWidth, align: state.align };
+}
+function getGlobalProfile() { return { palette: state.palette, accent: state.accent, texture: state.texture, icon: state.icon, compact: state.compact }; }
+
+function savePageProfile(entryId) {
+  if (!entryId) return;
+  const profiles = getPageProfiles();
+  profiles[String(entryId)] = { ...getPageProfile(), global: getGlobalProfile(), savedAt: new Date().toISOString() };
+  localStorage.setItem("typingDiaryPageProfiles", JSON.stringify(profiles));
+}
+
+function getEntryProfile(entryId) { return getPageProfiles()[String(entryId)] || null; }
+function getEntryGlobalProfile(entryId) { return getEntryProfile(entryId)?.global || null; }
+
+function restorePageProfile(entryId) {
+  const profile = getEntryProfile(entryId);
+  if (!profile) return false;
+  Object.assign(state, {
+    font: profile.font || state.font, pageStyle: profile.pageStyle || state.pageStyle,
+    fontSize: Number(profile.fontSize || state.fontSize), lineHeight: Number(profile.lineHeight || state.lineHeight),
+    editorWidth: Number(profile.editorWidth || state.editorWidth), align: profile.align || state.align
+  });
+  persistAppearance(); applyAppearance();
+  return true;
+}
+
+function pageProfileLabel(profile) {
+  if (!profile) return "Current page style";
+  const fontNames = { dm:"DM Sans", lora:"Lora", fraunces:"Fraunces", caveat:"Caveat", patrick:"Patrick Hand", kalam:"Kalam", mono:"Space Mono" };
+  return `${profile.pageStyle || "blank"} · ${fontNames[profile.font] || profile.font || "font"}`;
+}
+
 function applyTheme() {
   document.documentElement.dataset.theme = state.theme;
   document.body.classList.toggle("light", state.theme === "light");
@@ -103,13 +142,9 @@ function applyTheme() {
 
 function applyAppearance() {
   document.documentElement.dataset.palette = state.palette;
-  const activeAccent = state.accent || getPaletteColor(state.palette);
-  const activeStrong = state.accent ? state.accent : getPaletteColor(state.palette);
-  document.documentElement.style.setProperty("--active-accent", activeAccent);
-  document.documentElement.style.setProperty("--active-accent-strong", activeStrong);
-  document.documentElement.style.setProperty("--accent", activeAccent);
-  document.documentElement.style.setProperty("--accent-strong", activeStrong);
-  document.documentElement.style.setProperty("--custom-accent", activeAccent);
+  document.documentElement.style.setProperty("--accent", state.accent || getPaletteColor(state.palette));
+  document.documentElement.style.setProperty("--accent-strong", state.accent || getPaletteColor(state.palette));
+  document.documentElement.style.setProperty("--custom-accent", state.accent || "");
   document.documentElement.style.setProperty("--editor-font-size", `${state.fontSize}px`);
   document.documentElement.style.setProperty("--editor-line-height", state.lineHeight);
   document.documentElement.style.setProperty("--editor-width", `${state.editorWidth}px`);
@@ -138,6 +173,7 @@ function applyAppearance() {
   document.querySelectorAll(".align-choice").forEach((button) => button.classList.toggle("active", button.dataset.align === state.align));
   document.querySelectorAll(".brand-mark").forEach((el) => el.textContent = state.icon);
   document.documentElement.dataset.icon = state.icon;
+  document.querySelectorAll("[data-settings-scope]").forEach((section) => { section.hidden = section.dataset.settingsScope !== state.settingsTab; });
 }
 
 function persistAppearance() {
@@ -231,6 +267,7 @@ function renderEntries() {
         <h3>${escapeHtml(entry.title)}</h3>
         <p>${escapeHtml(entry.content)}</p>
         <div class="entry-meta">${formatDate(entry.createdAt)} ${entry.mood ? `· ${escapeHtml(entry.mood)}` : ""} · ${entry.words} words ${entry.wpm ? `· ${entry.wpm} WPM` : ""}</div>
+        <div class="entry-style-history"><span class="style-label">PAGE</span><span class="style-chip">${escapeHtml(pageProfileLabel(getEntryProfile(entry.id)))}</span><span class="style-chip">${escapeHtml((getEntryProfile(entry.id)?.align || "left"))}</span><span class="style-label global">GLOBAL</span><span class="style-chip global-chip">${escapeHtml(getPaletteColorName(getEntryGlobalProfile(entry.id)?.palette || state.palette))}</span><span class="style-chip global-chip">${escapeHtml(getEntryGlobalProfile(entry.id)?.icon || state.icon)}</span></div>
       </div>
       <div class="entry-actions">
         <button class="entry-action" data-action="edit" data-id="${entry.id}" type="button">Edit</button>
@@ -305,6 +342,7 @@ function editEntry(entry) {
   state.editingId = entry.id;
   state.mood = entry.mood;
   state.seconds = entry.seconds;
+  restorePageProfile(entry.id);
   titleInput.value = entry.title;
   editor.value = entry.content;
   $("dayNumber").textContent = String(state.entries.findIndex((candidate) => candidate.id === entry.id) + 1).padStart(2, "0");
@@ -334,6 +372,7 @@ async function saveEntry() {
     } else {
       state.entries = [data.entry, ...state.entries];
     }
+    savePageProfile(data.entry.id);
     renderStats();
     renderEntries();
     const wasEditing = Boolean(state.editingId);
@@ -455,9 +494,18 @@ function bindEvents() {
     showAuth();
   });
   if ($("deleteAccountBtn")) $("deleteAccountBtn").addEventListener("click", deleteAccount);
-  $("customizeButton").addEventListener("click", () => { $("customizeModal").hidden = false; });
+  $("customizeButton").addEventListener("click", () => {
+    $("customizeModal").hidden = false;
+    const tab = document.querySelector(`.settings-tab[data-settings-tab="${state.settingsTab}"]`) || document.querySelector('.settings-tab[data-settings-tab="page"]');
+    tab.click();
+  });
   $("closeCustomize").addEventListener("click", () => { $("customizeModal").hidden = true; });
   $("customizeModal").addEventListener("click", (event) => { if (event.target === $("customizeModal")) $("customizeModal").hidden = true; });
+  document.querySelectorAll(".settings-tab").forEach((button) => button.addEventListener("click", () => {
+    state.settingsTab = button.dataset.settingsTab;
+    document.querySelectorAll(".settings-tab").forEach((tab) => { const active = tab === button; tab.classList.toggle("active", active); tab.setAttribute("aria-selected", active ? "true" : "false"); });
+    document.querySelectorAll("[data-settings-scope]").forEach((section) => { section.hidden = section.dataset.settingsScope !== state.settingsTab; });
+  }));
   document.querySelectorAll(".font-choice").forEach((button) => button.addEventListener("click", () => { state.font = button.dataset.font; persistAppearance(); applyAppearance(); }));
   document.querySelectorAll(".palette-card").forEach((button) => button.addEventListener("click", () => { state.palette = button.dataset.palette; persistAppearance(); applyAppearance(); }));
   document.querySelectorAll(".preset-card").forEach((button) => button.addEventListener("click", () => applyPreset(button.dataset.preset)));
