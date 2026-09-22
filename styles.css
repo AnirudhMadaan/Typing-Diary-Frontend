@@ -510,3 +510,30 @@ body.compact-writing .mood-row { margin-top:9px; }
 .style-chip { padding:3px 6px; border:1px solid var(--line); color:var(--muted); background:var(--bg-raised); font:8px "Roboto Mono",monospace; text-transform:capitalize; }
 .global-chip { border-style:dashed; }
 @media(max-width:600px){ .settings-tabs{grid-template-columns:1fr}.entry-style-history{gap:4px}.style-label.global{margin-left:2px} }
+
+/* History design previews + page ink */
+.editor-textarea { color: var(--editor-ink, inherit); }
+.text-color-control { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-top:1px dashed var(--line); }
+.text-color-control > span { display:flex; flex-direction:column; gap:3px; }
+.text-color-control strong { font-size:12px; color:var(--text); }
+.text-color-control small { font-size:10px; color:var(--muted); }
+.text-color-picker { display:flex; align-items:center; gap:7px; }
+.text-color-picker input { width:38px; height:30px; padding:2px; border:1px solid var(--line); border-radius:7px; background:var(--panel); cursor:pointer; }
+.text-color-picker i { width:12px; height:12px; border-radius:50%; border:2px solid var(--panel); box-shadow:0 0 0 1px var(--line); }
+.history-design { margin-top:10px; display:grid; grid-template-columns: minmax(145px,220px) 1fr; gap:10px; align-items:center; }
+.history-preview { position:relative; min-height:55px; max-width:220px; padding:9px 11px; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--history-ink, var(--text)); font-size:10px; line-height:1.6; box-shadow:1px 2px 0 rgba(0,0,0,.06); }
+.history-preview span { position:relative; z-index:2; display:block; }
+.history-preview.page-lined { background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 17px, color-mix(in srgb, var(--history-ink) 22%, transparent) 18px, transparent 19px); }
+.history-preview.page-grid { background-image:linear-gradient(color-mix(in srgb, var(--history-ink) 12%, transparent) 1px, transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--history-ink) 12%, transparent) 1px,transparent 1px); background-size:16px 16px; }
+.history-preview.page-dots { background-image:radial-gradient(color-mix(in srgb, var(--history-ink) 25%, transparent) 1px,transparent 1px); background-size:12px 12px; }
+.history-preview.page-paper { background-image:radial-gradient(color-mix(in srgb, var(--history-ink) 7%, transparent) .7px,transparent .7px); background-size:6px 6px; }
+.history-design-meta { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+.ink-dot,.mood-dot { display:inline-block; width:13px; height:13px; border-radius:50%; border:2px solid var(--panel); box-shadow:0 0 0 1px var(--line); }
+@media(max-width:600px){ .history-design{grid-template-columns:1fr}.history-preview{max-width:none}.history-design-meta{padding-left:0} }
+
+/* Safer destructive account action */
+#deleteAccountBtn { width:100%; margin-top:8px; padding:10px 13px; border:1px solid rgba(205,73,91,.34); border-radius:9px; background:linear-gradient(180deg,rgba(205,73,91,.10),rgba(205,73,91,.04)); color:#d95d6d; font-weight:700; letter-spacing:.01em; box-shadow:0 2px 0 rgba(205,73,91,.08); transition:transform .16s,background .16s,border-color .16s,box-shadow .16s; }
+#deleteAccountBtn::before { content:"⌫  "; opacity:.8; }
+#deleteAccountBtn:hover { transform:translateY(-1px); border-color:rgba(205,73,91,.65); background:linear-gradient(180deg,rgba(205,73,91,.17),rgba(205,73,91,.07)); box-shadow:0 4px 12px rgba(205,73,91,.12); }
+#deleteAccountBtn:active { transform:translateY(0); box-shadow:none; }
+body.light #deleteAccountBtn { color:#a83c4d; border-color:rgba(168,60,77,.3); }

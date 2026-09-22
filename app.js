@@ -18,6 +18,7 @@ const state = {
   icon: localStorage.getItem("typingDiaryIcon") || "✦",
   accent: localStorage.getItem("typingDiaryAccent") || "",
   align: localStorage.getItem("typingDiaryAlign") || "left",
+  textColor: localStorage.getItem("typingDiaryTextColor") || "",
   wordGoal: Number(localStorage.getItem("typingDiaryWordGoal") || 500),
   compact: localStorage.getItem("typingDiaryCompact") === "true",
   settingsTab: "page",
@@ -100,7 +101,7 @@ function getPageProfiles() {
 }
 
 function getPageProfile() {
-  return { font: state.font, pageStyle: state.pageStyle, fontSize: state.fontSize, lineHeight: state.lineHeight, editorWidth: state.editorWidth, align: state.align };
+  return { font: state.font, pageStyle: state.pageStyle, fontSize: state.fontSize, lineHeight: state.lineHeight, editorWidth: state.editorWidth, align: state.align, textColor: state.textColor };
 }
 function getGlobalProfile() { return { palette: state.palette, accent: state.accent, texture: state.texture, icon: state.icon, compact: state.compact }; }
 
@@ -120,7 +121,7 @@ function restorePageProfile(entryId) {
   Object.assign(state, {
     font: profile.font || state.font, pageStyle: profile.pageStyle || state.pageStyle,
     fontSize: Number(profile.fontSize || state.fontSize), lineHeight: Number(profile.lineHeight || state.lineHeight),
-    editorWidth: Number(profile.editorWidth || state.editorWidth), align: profile.align || state.align
+    editorWidth: Number(profile.editorWidth || state.editorWidth), align: profile.align || state.align, textColor: profile.textColor || state.textColor
   });
   persistAppearance(); applyAppearance();
   return true;
@@ -152,6 +153,7 @@ function applyAppearance() {
   document.body.classList.toggle("focus-mode", state.focus);
   editor.className = `editor-textarea font-${state.font === "dm" ? "dm-sans" : state.font}`;
   editor.style.textAlign = state.align;
+  editor.style.color = state.textColor || "";
   document.body.classList.toggle("compact-writing", state.compact);
   $("editorCard").classList.remove("page-lined", "page-paper", "page-blank", "page-grid", "page-dots");
   $("editorCard").classList.add(`page-${state.pageStyle}`);
@@ -170,6 +172,8 @@ function applyAppearance() {
   $("compactToggle").checked = state.compact;
   $("wordGoalRange").value = state.wordGoal; $("wordGoalValue").textContent = state.wordGoal;
   $("accentColorPicker").value = state.accent || getPaletteColor(state.palette);
+  $("textColorPicker").value = state.textColor || (state.theme === "light" ? "#26322b" : "#e7eee8");
+  $("textColorSwatch").style.background = $("textColorPicker").value;
   document.querySelectorAll(".align-choice").forEach((button) => button.classList.toggle("active", button.dataset.align === state.align));
   document.querySelectorAll(".brand-mark").forEach((el) => el.textContent = state.icon);
   document.documentElement.dataset.icon = state.icon;
@@ -188,6 +192,7 @@ function persistAppearance() {
   localStorage.setItem("typingDiaryIcon", state.icon);
   localStorage.setItem("typingDiaryAccent", state.accent);
   localStorage.setItem("typingDiaryAlign", state.align);
+  localStorage.setItem("typingDiaryTextColor", state.textColor);
   localStorage.setItem("typingDiaryWordGoal", state.wordGoal);
   localStorage.setItem("typingDiaryCompact", state.compact);
 }
@@ -267,7 +272,7 @@ function renderEntries() {
         <h3>${escapeHtml(entry.title)}</h3>
         <p>${escapeHtml(entry.content)}</p>
         <div class="entry-meta">${formatDate(entry.createdAt)} ${entry.mood ? `· ${escapeHtml(entry.mood)}` : ""} · ${entry.words} words ${entry.wpm ? `· ${entry.wpm} WPM` : ""}</div>
-        <div class="entry-style-history"><span class="style-label">PAGE</span><span class="style-chip">${escapeHtml(pageProfileLabel(getEntryProfile(entry.id)))}</span><span class="style-chip">${escapeHtml((getEntryProfile(entry.id)?.align || "left"))}</span><span class="style-label global">GLOBAL</span><span class="style-chip global-chip">${escapeHtml(getPaletteColorName(getEntryGlobalProfile(entry.id)?.palette || state.palette))}</span><span class="style-chip global-chip">${escapeHtml(getEntryGlobalProfile(entry.id)?.icon || state.icon)}</span></div>
+        ${(() => { const profile=getEntryProfile(entry.id)||{}; const global=getEntryGlobalProfile(entry.id)||{}; const page=profile.pageStyle||"blank"; const font=profile.font||"lora"; const ink=profile.textColor || "#26322b"; const palette=global.palette||state.palette; const previewText=(entry.content||"A quiet note from this day.").slice(0,72); return `<div class="history-design"><div class="history-preview page-${escapeHtml(page)} font-${font === "dm" ? "dm-sans" : font}" style="--history-ink:${escapeHtml(ink)}"><span>${escapeHtml(previewText)}</span></div><div class="history-design-meta"><span class="style-label">PAGE</span><span class="style-chip">${escapeHtml(page)}</span><span class="style-chip">${escapeHtml(font)}</span><span class="ink-dot" style="background:${escapeHtml(ink)}" title="Text color ${escapeHtml(ink)}"></span><span class="style-label global">GLOBAL</span><span class="mood-dot" style="background:${escapeHtml((global.accent || getPaletteColor(palette)))}" title="${escapeHtml(getPaletteColorName(palette))}"></span><span class="style-chip global-chip">${escapeHtml(getPaletteColorName(palette))}</span><span class="style-chip global-chip">${escapeHtml(global.icon||state.icon)}</span></div></div>`; })()}
       </div>
       <div class="entry-actions">
         <button class="entry-action" data-action="edit" data-id="${entry.id}" type="button">Edit</button>
@@ -510,6 +515,7 @@ function bindEvents() {
   document.querySelectorAll(".palette-card").forEach((button) => button.addEventListener("click", () => { state.palette = button.dataset.palette; persistAppearance(); applyAppearance(); }));
   document.querySelectorAll(".preset-card").forEach((button) => button.addEventListener("click", () => applyPreset(button.dataset.preset)));
   $("accentColorPicker").addEventListener("input", (event) => { state.accent = event.target.value; persistAppearance(); applyAppearance(); });
+  $("textColorPicker").addEventListener("input", (event) => { state.textColor = event.target.value; persistAppearance(); applyAppearance(); });
   $("randomizeStyle").addEventListener("click", () => { const palettes=["forest","ink","ocean","rose","lavender","sunset"]; const fonts=["dm","lora","fraunces","caveat","patrick","kalam","mono"]; const pages=["lined","grid","dots","paper","blank"]; state.palette=palettes[Math.floor(Math.random()*palettes.length)]; state.font=fonts[Math.floor(Math.random()*fonts.length)]; state.pageStyle=pages[Math.floor(Math.random()*pages.length)]; state.accent=""; persistAppearance(); applyAppearance(); showToast("A new writing mood is ready."); });
   document.querySelectorAll(".page-style").forEach((button) => button.addEventListener("click", () => { state.pageStyle = button.dataset.pageStyle; persistAppearance(); applyAppearance(); }));
   document.querySelectorAll(".icon-choice").forEach((button) => button.addEventListener("click", () => { state.icon = button.dataset.icon; persistAppearance(); applyAppearance(); }));
@@ -523,7 +529,7 @@ function bindEvents() {
   $("focusToggle").addEventListener("change", (event) => { state.focus = event.target.checked; persistAppearance(); applyAppearance(); });
   $("compactToggle").addEventListener("change", (event) => { state.compact = event.target.checked; persistAppearance(); applyAppearance(); });
   $("resetSettings").addEventListener("click", () => {
-    Object.assign(state, { theme: "dark", font: "lora", pageStyle: "lined", palette: "forest", fontSize: 16, lineHeight: 1.9, editorWidth: 720, texture: true, focus: false, icon: "✦", accent: "", align: "left", wordGoal: 500, compact: false });
+    Object.assign(state, { theme: "dark", font: "lora", pageStyle: "lined", palette: "forest", fontSize: 16, lineHeight: 1.9, editorWidth: 720, texture: true, focus: false, icon: "✦", accent: "", align: "left", wordGoal: 500, compact: false, textColor: "" });
     persistAppearance(); applyTheme(); applyAppearance(); showToast("Appearance reset.");
   });
   $("newPromptButton").addEventListener("click", () => { const current = $("promptText").textContent; const options = prompts.filter((prompt) => prompt !== current); $("promptText").textContent = options[Math.floor(Math.random() * options.length)]; });
