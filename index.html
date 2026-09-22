@@ -48,7 +48,7 @@
         <form id="authForm" class="auth-form">
           <label id="nameField" class="field" hidden>
             <span>Your name</span>
-            <input id="nameInput" type="text" autocomplete="name" placeholder="How should we call you?" />
+            <input id="nameInput" type="text" autocomplete="name" minlength="2" maxlength="80" placeholder="How should we call you?" />
           </label>
           <label class="field">
             <span>Email address</span>
@@ -57,7 +57,7 @@
           <label class="field">
             <span>Password</span>
             <span class="password-input">
-              <input id="passwordInput" type="password" autocomplete="current-password" placeholder="8+ characters"
+              <input id="passwordInput" type="password" autocomplete="current-password" minlength="8" maxlength="200" placeholder="8+ characters"
                 required />
               <button id="passwordToggle" class="input-action" type="button" aria-label="Show password">Show</button>
             </span>

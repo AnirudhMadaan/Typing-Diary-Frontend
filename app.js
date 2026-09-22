@@ -48,14 +48,20 @@ function showToast(message, type = "") {
 }
 
 async function request(url, options = {}) {
-  const response = await fetch(`${API_BASE}${url}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${url}`, {
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+  } catch {
+    throw new Error("Unable to reach the diary server. Please check your connection and try again.");
+  }
+
   if (response.status === 204) return null;
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error || "Something went wrong.");
+  if (!response.ok) throw new Error(body.error || `Request failed (${response.status}).`);
   return body;
 }
 
@@ -299,15 +305,42 @@ async function deleteAccount() {
 async function handleAuth(event) {
   event.preventDefault();
   authError.textContent = "";
-  const payload = { email: $("emailInput").value, password: $("passwordInput").value };
-  if (state.authMode === "register") payload.name = $("nameInput").value;
+
+  const submitButton = authForm.querySelector('button[type="submit"]');
+  const submitLabel = $("authSubmitLabel");
+  const originalLabel = state.authMode === "register" ? "Create account" : "Sign in";
+  const payload = { email: $("emailInput").value.trim(), password: $("passwordInput").value };
+  if (state.authMode === "register") payload.name = $("nameInput").value.trim();
+
+  submitButton.disabled = true;
+  submitLabel.textContent = state.authMode === "register" ? "Creating…" : "Signing in…";
+
   try {
-    const data = await request(`/api/auth/${state.authMode}`, { method: "POST", body: JSON.stringify(payload) });
+    const data = await request(`/api/auth/${state.authMode}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    // Authentication succeeded. Switch views immediately instead of allowing a
+    // secondary archive request to make a successful login look like a failure.
     state.user = data.user;
     showApp();
-    await loadEntries();
+
+    try {
+      await loadEntries();
+    } catch (error) {
+      state.entries = [];
+      renderStats();
+      renderEntries();
+      resetEditor(false);
+      showToast("Signed in. Your archive could not be loaded yet.", "error");
+      console.error("Typing Diary: failed to load entries after authentication", error);
+    }
   } catch (error) {
     authError.textContent = error.message;
+  } finally {
+    submitButton.disabled = false;
+    submitLabel.textContent = originalLabel;
   }
 }
 
