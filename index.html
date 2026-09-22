@@ -216,7 +216,7 @@
 
       <div class="settings-content settings-grid-pro">
         <section class="setting-section setting-wide">
-          <div class="setting-heading"><div><span>Color mood</span><small>Choose a complete visual palette.</small></div><span id="activePaletteLabel" class="setting-value">Forest</span></div>
+          <div class="setting-heading"><div><span>Color mood</span><small>Choose a complete visual palette or make your own.</small></div><span id="activePaletteLabel" class="setting-value">Forest</span></div>
           <div id="paletteOptions" class="palette-options">
             <button class="palette-card" data-palette="forest" type="button"><i></i><span>Forest</span><small>quiet + earthy</small></button>
             <button class="palette-card" data-palette="ink" type="button"><i></i><span>Ink</span><small>charcoal + amber</small></button>
@@ -224,6 +224,10 @@
             <button class="palette-card" data-palette="rose" type="button"><i></i><span>Rose</span><small>soft + warm</small></button>
             <button class="palette-card" data-palette="lavender" type="button"><i></i><span>Lavender</span><small>dreamy + calm</small></button>
             <button class="palette-card" data-palette="sunset" type="button"><i></i><span>Sunset</span><small>clay + golden</small></button>
+          </div>
+          <div class="custom-color-row">
+            <label class="color-picker"><input id="accentColorPicker" type="color" value="#176b4d" aria-label="Custom accent color"><span>Custom accent</span></label>
+            <button id="randomizeStyle" class="mini-action" type="button">Surprise me ↗</button>
           </div>
         </section>
 
@@ -251,11 +255,23 @@
           </div>
         </section>
 
+        <section class="setting-section setting-wide">
+          <div class="setting-heading"><div><span>Style presets</span><small>One tap changes the whole writing atmosphere.</small></div></div>
+          <div class="preset-grid">
+            <button class="preset-card" data-preset="writer" type="button"><b>Writer</b><small>lined · Lora · forest</small></button>
+            <button class="preset-card" data-preset="journal" type="button"><b>Journal</b><small>dots · Caveat · rose</small></button>
+            <button class="preset-card" data-preset="study" type="button"><b>Study</b><small>grid · DM Sans · ocean</small></button>
+            <button class="preset-card" data-preset="night" type="button"><b>Night notes</b><small>paper · mono · ink</small></button>
+          </div>
+        </section>
+
         <section class="setting-section">
           <div class="setting-heading"><div><span>Editor feel</span><small>Fine tune reading and writing comfort.</small></div></div>
           <label class="range-control"><span>Text size <output id="fontSizeValue">16px</output></span><input id="fontSizeRange" type="range" min="13" max="22" step="1" value="16" /></label>
           <label class="range-control"><span>Line spacing <output id="lineHeightValue">1.9</output></span><input id="lineHeightRange" type="range" min="1.45" max="2.5" step="0.05" value="1.9" /></label>
           <label class="range-control"><span>Page width <output id="editorWidthValue">720px</output></span><input id="editorWidthRange" type="range" min="560" max="900" step="20" value="720" /></label>
+          <label class="range-control"><span>Daily word goal <output id="wordGoalValue">500</output></span><input id="wordGoalRange" type="range" min="100" max="2000" step="100" value="500" /></label>
+          <div class="alignment-control"><span>Text alignment</span><div><button class="align-choice active" data-align="left" type="button">Left</button><button class="align-choice" data-align="center" type="button">Center</button><button class="align-choice" data-align="justify" type="button">Justify</button></div></div>
         </section>
 
         <section class="setting-section">
@@ -264,6 +280,7 @@
             <label class="setting-switch"><span><strong>Paper texture</strong><small>Add subtle grain to the workspace.</small></span><span class="switch"><input id="textureToggle" type="checkbox" checked /><i></i></span></label>
             <label class="setting-switch"><span><strong>Writing guide</strong><small>Keep soft lines, dots or a grid behind text.</small></span><span class="switch"><input id="linesToggle" type="checkbox" checked /><i></i></span></label>
             <label class="setting-switch"><span><strong>Focus mode</strong><small>Hide the archive and stats while writing.</small></span><span class="switch"><input id="focusToggle" type="checkbox" /><i></i></span></label>
+            <label class="setting-switch"><span><strong>Compact writing</strong><small>Give the editor more breathing room by shrinking chrome.</small></span><span class="switch"><input id="compactToggle" type="checkbox" /><i></i></span></label>
           </div>
         </section>
 

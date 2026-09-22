@@ -452,3 +452,48 @@ body.focus-mode .editor-card { width:min(100%, var(--editor-width)); margin-inli
 .icon-options { display:flex; gap:7px; flex-wrap:wrap; }.icon-choice { width:42px; height:42px; border:1px solid var(--line); color:var(--text); background:var(--bg-raised); font-size:18px; }.settings-footer { display:flex; justify-content:space-between; gap:15px; align-items:center; padding-top:16px; color:var(--faint); font-size:9px; }.reset-link { color:var(--accent); }
 @media(max-width:760px){ .settings-grid-pro{grid-template-columns:1fr}.setting-wide{grid-column:auto}.palette-options{grid-template-columns:repeat(3,1fr)}.page-style-pro{grid-template-columns:repeat(3,1fr)}.settings-footer{align-items:flex-start;flex-direction:column} }
 @media(max-width:460px){.palette-options{grid-template-columns:repeat(2,1fr)}.page-style-pro{grid-template-columns:repeat(2,1fr)}.font-picker{grid-template-columns:1fr}}
+
+/* ===== v2 fixes + extra personalization ===== */
+:root { --custom-accent: #176b4d; }
+body:not(.light) { --accent: var(--custom-accent, #176b4d); --accent-strong: var(--custom-accent, #176b4d); }
+:root[data-palette="forest"] { --palette-accent:#176b4d; }
+:root[data-palette="ink"] { --palette-accent:#b7772d; }
+:root[data-palette="ocean"] { --palette-accent:#287b91; }
+:root[data-palette="rose"] { --palette-accent:#a55267; }
+:root[data-palette="lavender"] { --palette-accent:#715e9d; }
+:root[data-palette="sunset"] { --palette-accent:#a65d35; }
+
+/* The writing surface owns the ruled paper so the lines stay visible in both themes. */
+.editor-card.page-lined .editor-textarea {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc((var(--editor-font-size) * var(--editor-line-height)) - 1px),
+    color-mix(in srgb, var(--accent) 20%, transparent) calc(var(--editor-font-size) * var(--editor-line-height)),
+    transparent calc((var(--editor-font-size) * var(--editor-line-height)) + 1px)
+  );
+  background-size: 100% calc(var(--editor-font-size) * var(--editor-line-height));
+  background-position: 0 .35em;
+  background-repeat: repeat-y;
+}
+.editor-card.page-lined { background-image:none; }
+body:not(.light) .editor-card.page-lined .editor-textarea { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc((var(--editor-font-size) * var(--editor-line-height)) - 1px), color-mix(in srgb, var(--accent) 28%, transparent) calc(var(--editor-font-size) * var(--editor-line-height)), transparent calc((var(--editor-font-size) * var(--editor-line-height)) + 1px)); }
+
+.custom-color-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); }
+.color-picker { display:flex; align-items:center; gap:9px; color:var(--muted); font-size:10px; }
+.color-picker input { width:32px; height:26px; padding:0; border:1px solid var(--line); background:transparent; cursor:pointer; }
+.mini-action { border:1px solid var(--line); background:var(--bg-raised); color:var(--accent); padding:7px 9px; font:9px "Space Mono",monospace; }
+.preset-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.preset-card { display:grid; gap:5px; padding:12px; min-height:70px; text-align:left; border:1px solid var(--line); background:var(--bg-raised); color:var(--text); }
+.preset-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+.preset-card b { font-size:12px; font-weight:600; }
+.preset-card small { color:var(--muted); font-size:9px; }
+.alignment-control { display:grid; gap:8px; margin-top:14px; color:var(--muted); font-size:10px; }
+.alignment-control > div { display:flex; gap:5px; }
+.align-choice { flex:1; border:1px solid var(--line); background:var(--bg-raised); color:var(--muted); padding:7px 5px; font:9px "Space Mono",monospace; }
+.align-choice.active { color:var(--accent); border-color:var(--accent); background:var(--accent-soft); }
+body.compact-writing .editor-toolbar { padding-bottom:9px; }
+body.compact-writing .editor-card { min-height:460px; padding-top:18px; }
+body.compact-writing .mood-row { margin-top:9px; }
+@media(max-width:760px){ .preset-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:460px){ .custom-color-row{align-items:flex-start; flex-direction:column}.preset-grid{grid-template-columns:1fr} }

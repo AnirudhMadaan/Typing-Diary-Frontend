@@ -16,6 +16,10 @@ const state = {
   texture: localStorage.getItem("typingDiaryTexture") !== "false",
   focus: localStorage.getItem("typingDiaryFocus") === "true",
   icon: localStorage.getItem("typingDiaryIcon") || "✦",
+  accent: localStorage.getItem("typingDiaryAccent") || "",
+  align: localStorage.getItem("typingDiaryAlign") || "left",
+  wordGoal: Number(localStorage.getItem("typingDiaryWordGoal") || 500),
+  compact: localStorage.getItem("typingDiaryCompact") === "true",
 };
 
 const API_BASE = window.TYPING_DIARY_API_URL ||
@@ -74,6 +78,21 @@ async function request(url, options = {}) {
   return body;
 }
 
+function getPaletteColor(name) {
+  return ({ forest:"#176b4d", ink:"#b7772d", ocean:"#287b91", rose:"#a55267", lavender:"#715e9d", sunset:"#a65d35" })[name] || "#176b4d";
+}
+
+function applyPreset(name) {
+  const presets = {
+    writer:{palette:"forest",font:"lora",pageStyle:"lined",accent:"",align:"left",texture:true,compact:false},
+    journal:{palette:"rose",font:"caveat",pageStyle:"dots",accent:"",align:"left",texture:true,compact:false},
+    study:{palette:"ocean",font:"dm",pageStyle:"grid",accent:"",align:"left",texture:false,compact:true},
+    night:{palette:"ink",font:"mono",pageStyle:"paper",accent:"",align:"left",texture:true,compact:true}
+  };
+  Object.assign(state, presets[name] || {});
+  persistAppearance(); applyAppearance(); showToast(`${name.replace(/(^|\s)\S/g,m=>m.toUpperCase())} preset applied.`);
+}
+
 function applyTheme() {
   document.documentElement.dataset.theme = state.theme;
   document.body.classList.toggle("light", state.theme === "light");
@@ -84,12 +103,17 @@ function applyTheme() {
 
 function applyAppearance() {
   document.documentElement.dataset.palette = state.palette;
+  document.documentElement.style.setProperty("--accent", state.accent || getPaletteColor(state.palette));
+  document.documentElement.style.setProperty("--accent-strong", state.accent || getPaletteColor(state.palette));
+  document.documentElement.style.setProperty("--custom-accent", state.accent || "");
   document.documentElement.style.setProperty("--editor-font-size", `${state.fontSize}px`);
   document.documentElement.style.setProperty("--editor-line-height", state.lineHeight);
   document.documentElement.style.setProperty("--editor-width", `${state.editorWidth}px`);
   document.body.classList.toggle("texture-off", !state.texture);
   document.body.classList.toggle("focus-mode", state.focus);
   editor.className = `editor-textarea font-${state.font === "dm" ? "dm-sans" : state.font}`;
+  editor.style.textAlign = state.align;
+  document.body.classList.toggle("compact-writing", state.compact);
   $("editorCard").classList.remove("page-lined", "page-paper", "page-blank", "page-grid", "page-dots");
   $("editorCard").classList.add(`page-${state.pageStyle}`);
   document.querySelectorAll(".page-style").forEach((button) => {
@@ -104,6 +128,10 @@ function applyAppearance() {
   $("lineHeightRange").value = state.lineHeight; $("lineHeightValue").textContent = Number(state.lineHeight).toFixed(2);
   $("editorWidthRange").value = state.editorWidth; $("editorWidthValue").textContent = `${state.editorWidth}px`;
   $("textureToggle").checked = state.texture; $("linesToggle").checked = state.pageStyle !== "blank"; $("focusToggle").checked = state.focus;
+  $("compactToggle").checked = state.compact;
+  $("wordGoalRange").value = state.wordGoal; $("wordGoalValue").textContent = state.wordGoal;
+  $("accentColorPicker").value = state.accent || getPaletteColor(state.palette);
+  document.querySelectorAll(".align-choice").forEach((button) => button.classList.toggle("active", button.dataset.align === state.align));
   document.querySelectorAll(".brand-mark").forEach((el) => el.textContent = state.icon);
   document.documentElement.dataset.icon = state.icon;
 }
@@ -118,6 +146,10 @@ function persistAppearance() {
   localStorage.setItem("typingDiaryTexture", state.texture);
   localStorage.setItem("typingDiaryFocus", state.focus);
   localStorage.setItem("typingDiaryIcon", state.icon);
+  localStorage.setItem("typingDiaryAccent", state.accent);
+  localStorage.setItem("typingDiaryAlign", state.align);
+  localStorage.setItem("typingDiaryWordGoal", state.wordGoal);
+  localStorage.setItem("typingDiaryCompact", state.compact);
 }
 
 function setAuthMode(mode) {
@@ -424,16 +456,22 @@ function bindEvents() {
   $("customizeModal").addEventListener("click", (event) => { if (event.target === $("customizeModal")) $("customizeModal").hidden = true; });
   document.querySelectorAll(".font-choice").forEach((button) => button.addEventListener("click", () => { state.font = button.dataset.font; persistAppearance(); applyAppearance(); }));
   document.querySelectorAll(".palette-card").forEach((button) => button.addEventListener("click", () => { state.palette = button.dataset.palette; persistAppearance(); applyAppearance(); }));
+  document.querySelectorAll(".preset-card").forEach((button) => button.addEventListener("click", () => applyPreset(button.dataset.preset)));
+  $("accentColorPicker").addEventListener("input", (event) => { state.accent = event.target.value; persistAppearance(); applyAppearance(); });
+  $("randomizeStyle").addEventListener("click", () => { const palettes=["forest","ink","ocean","rose","lavender","sunset"]; const fonts=["dm","lora","fraunces","caveat","patrick","kalam","mono"]; const pages=["lined","grid","dots","paper","blank"]; state.palette=palettes[Math.floor(Math.random()*palettes.length)]; state.font=fonts[Math.floor(Math.random()*fonts.length)]; state.pageStyle=pages[Math.floor(Math.random()*pages.length)]; state.accent=""; persistAppearance(); applyAppearance(); showToast("A new writing mood is ready."); });
   document.querySelectorAll(".page-style").forEach((button) => button.addEventListener("click", () => { state.pageStyle = button.dataset.pageStyle; persistAppearance(); applyAppearance(); }));
   document.querySelectorAll(".icon-choice").forEach((button) => button.addEventListener("click", () => { state.icon = button.dataset.icon; persistAppearance(); applyAppearance(); }));
   $("fontSizeRange").addEventListener("input", (event) => { state.fontSize = Number(event.target.value); persistAppearance(); applyAppearance(); });
   $("lineHeightRange").addEventListener("input", (event) => { state.lineHeight = Number(event.target.value); persistAppearance(); applyAppearance(); });
   $("editorWidthRange").addEventListener("input", (event) => { state.editorWidth = Number(event.target.value); persistAppearance(); applyAppearance(); });
+  $("wordGoalRange").addEventListener("input", (event) => { state.wordGoal = Number(event.target.value); persistAppearance(); applyAppearance(); });
+  document.querySelectorAll(".align-choice").forEach((button) => button.addEventListener("click", () => { state.align = button.dataset.align; persistAppearance(); applyAppearance(); }));
   $("textureToggle").addEventListener("change", (event) => { state.texture = event.target.checked; persistAppearance(); applyAppearance(); });
   $("linesToggle").addEventListener("change", (event) => { if (!event.target.checked) state.pageStyle = "blank"; else if (state.pageStyle === "blank") state.pageStyle = "lined"; persistAppearance(); applyAppearance(); });
   $("focusToggle").addEventListener("change", (event) => { state.focus = event.target.checked; persistAppearance(); applyAppearance(); });
+  $("compactToggle").addEventListener("change", (event) => { state.compact = event.target.checked; persistAppearance(); applyAppearance(); });
   $("resetSettings").addEventListener("click", () => {
-    Object.assign(state, { theme: "dark", font: "lora", pageStyle: "lined", palette: "forest", fontSize: 16, lineHeight: 1.9, editorWidth: 720, texture: true, focus: false, icon: "✦" });
+    Object.assign(state, { theme: "dark", font: "lora", pageStyle: "lined", palette: "forest", fontSize: 16, lineHeight: 1.9, editorWidth: 720, texture: true, focus: false, icon: "✦", accent: "", align: "left", wordGoal: 500, compact: false });
     persistAppearance(); applyTheme(); applyAppearance(); showToast("Appearance reset.");
   });
   $("newPromptButton").addEventListener("click", () => { const current = $("promptText").textContent; const options = prompts.filter((prompt) => prompt !== current); $("promptText").textContent = options[Math.floor(Math.random() * options.length)]; });
