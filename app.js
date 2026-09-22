@@ -7,8 +7,15 @@ const state = {
   timerId: null,
   authMode: "login",
   theme: localStorage.getItem("typingDiaryTheme") || "dark",
-  font: localStorage.getItem("typingDiaryFont") || "dm",
+  font: localStorage.getItem("typingDiaryFont") || "lora",
   pageStyle: localStorage.getItem("typingDiaryPageStyle") || "lined",
+  palette: localStorage.getItem("typingDiaryPalette") || "forest",
+  fontSize: Number(localStorage.getItem("typingDiaryFontSize") || 16),
+  lineHeight: Number(localStorage.getItem("typingDiaryLineHeight") || 1.9),
+  editorWidth: Number(localStorage.getItem("typingDiaryEditorWidth") || 720),
+  texture: localStorage.getItem("typingDiaryTexture") !== "false",
+  focus: localStorage.getItem("typingDiaryFocus") === "true",
+  icon: localStorage.getItem("typingDiaryIcon") || "✦",
 };
 
 const API_BASE = window.TYPING_DIARY_API_URL ||
@@ -76,14 +83,41 @@ function applyTheme() {
 }
 
 function applyAppearance() {
+  document.documentElement.dataset.palette = state.palette;
+  document.documentElement.style.setProperty("--editor-font-size", `${state.fontSize}px`);
+  document.documentElement.style.setProperty("--editor-line-height", state.lineHeight);
+  document.documentElement.style.setProperty("--editor-width", `${state.editorWidth}px`);
+  document.body.classList.toggle("texture-off", !state.texture);
+  document.body.classList.toggle("focus-mode", state.focus);
   editor.className = `editor-textarea font-${state.font === "dm" ? "dm-sans" : state.font}`;
-  $("editorCard").classList.remove("page-lined", "page-paper", "page-blank");
+  $("editorCard").classList.remove("page-lined", "page-paper", "page-blank", "page-grid", "page-dots");
   $("editorCard").classList.add(`page-${state.pageStyle}`);
-  $("fontSelect").value = state.font;
   document.querySelectorAll(".page-style").forEach((button) => {
     button.classList.toggle("active", button.dataset.pageStyle === state.pageStyle);
   });
-  $("linesToggle").checked = state.pageStyle === "lined";
+  document.querySelectorAll(".font-choice").forEach((button) => button.classList.toggle("active", button.dataset.font === state.font));
+  document.querySelectorAll(".palette-card").forEach((button) => button.classList.toggle("active", button.dataset.palette === state.palette));
+  document.querySelectorAll(".icon-choice").forEach((button) => button.classList.toggle("active", button.dataset.icon === state.icon));
+  const paletteNames = { forest: "Forest", ink: "Ink", ocean: "Ocean", rose: "Rose", lavender: "Lavender", sunset: "Sunset" };
+  $("activePaletteLabel").textContent = paletteNames[state.palette] || "Forest";
+  $("fontSizeRange").value = state.fontSize; $("fontSizeValue").textContent = `${state.fontSize}px`;
+  $("lineHeightRange").value = state.lineHeight; $("lineHeightValue").textContent = Number(state.lineHeight).toFixed(2);
+  $("editorWidthRange").value = state.editorWidth; $("editorWidthValue").textContent = `${state.editorWidth}px`;
+  $("textureToggle").checked = state.texture; $("linesToggle").checked = state.pageStyle !== "blank"; $("focusToggle").checked = state.focus;
+  document.querySelectorAll(".brand-mark").forEach((el) => el.textContent = state.icon);
+  document.documentElement.dataset.icon = state.icon;
+}
+
+function persistAppearance() {
+  localStorage.setItem("typingDiaryPalette", state.palette);
+  localStorage.setItem("typingDiaryFont", state.font);
+  localStorage.setItem("typingDiaryPageStyle", state.pageStyle);
+  localStorage.setItem("typingDiaryFontSize", state.fontSize);
+  localStorage.setItem("typingDiaryLineHeight", state.lineHeight);
+  localStorage.setItem("typingDiaryEditorWidth", state.editorWidth);
+  localStorage.setItem("typingDiaryTexture", state.texture);
+  localStorage.setItem("typingDiaryFocus", state.focus);
+  localStorage.setItem("typingDiaryIcon", state.icon);
 }
 
 function setAuthMode(mode) {
@@ -388,10 +422,20 @@ function bindEvents() {
   $("customizeButton").addEventListener("click", () => { $("customizeModal").hidden = false; });
   $("closeCustomize").addEventListener("click", () => { $("customizeModal").hidden = true; });
   $("customizeModal").addEventListener("click", (event) => { if (event.target === $("customizeModal")) $("customizeModal").hidden = true; });
-  $("fontSelect").addEventListener("change", (event) => { state.font = event.target.value; localStorage.setItem("typingDiaryFont", state.font); applyAppearance(); });
-  document.querySelectorAll(".page-style").forEach((button) => button.addEventListener("click", () => { state.pageStyle = button.dataset.pageStyle; localStorage.setItem("typingDiaryPageStyle", state.pageStyle); applyAppearance(); }));
-  $("linesToggle").addEventListener("change", (event) => { state.pageStyle = event.target.checked ? "lined" : "blank"; localStorage.setItem("typingDiaryPageStyle", state.pageStyle); applyAppearance(); });
-  $("resetSettings").addEventListener("click", () => { state.font = "dm"; state.pageStyle = "lined"; localStorage.removeItem("typingDiaryFont"); localStorage.removeItem("typingDiaryPageStyle"); applyAppearance(); });
+  document.querySelectorAll(".font-choice").forEach((button) => button.addEventListener("click", () => { state.font = button.dataset.font; persistAppearance(); applyAppearance(); }));
+  document.querySelectorAll(".palette-card").forEach((button) => button.addEventListener("click", () => { state.palette = button.dataset.palette; persistAppearance(); applyAppearance(); }));
+  document.querySelectorAll(".page-style").forEach((button) => button.addEventListener("click", () => { state.pageStyle = button.dataset.pageStyle; persistAppearance(); applyAppearance(); }));
+  document.querySelectorAll(".icon-choice").forEach((button) => button.addEventListener("click", () => { state.icon = button.dataset.icon; persistAppearance(); applyAppearance(); }));
+  $("fontSizeRange").addEventListener("input", (event) => { state.fontSize = Number(event.target.value); persistAppearance(); applyAppearance(); });
+  $("lineHeightRange").addEventListener("input", (event) => { state.lineHeight = Number(event.target.value); persistAppearance(); applyAppearance(); });
+  $("editorWidthRange").addEventListener("input", (event) => { state.editorWidth = Number(event.target.value); persistAppearance(); applyAppearance(); });
+  $("textureToggle").addEventListener("change", (event) => { state.texture = event.target.checked; persistAppearance(); applyAppearance(); });
+  $("linesToggle").addEventListener("change", (event) => { if (!event.target.checked) state.pageStyle = "blank"; else if (state.pageStyle === "blank") state.pageStyle = "lined"; persistAppearance(); applyAppearance(); });
+  $("focusToggle").addEventListener("change", (event) => { state.focus = event.target.checked; persistAppearance(); applyAppearance(); });
+  $("resetSettings").addEventListener("click", () => {
+    Object.assign(state, { theme: "dark", font: "lora", pageStyle: "lined", palette: "forest", fontSize: 16, lineHeight: 1.9, editorWidth: 720, texture: true, focus: false, icon: "✦" });
+    persistAppearance(); applyTheme(); applyAppearance(); showToast("Appearance reset.");
+  });
   $("newPromptButton").addEventListener("click", () => { const current = $("promptText").textContent; const options = prompts.filter((prompt) => prompt !== current); $("promptText").textContent = options[Math.floor(Math.random() * options.length)]; });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
