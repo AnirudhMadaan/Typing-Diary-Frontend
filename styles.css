@@ -497,3 +497,24 @@ body.compact-writing .editor-card { min-height:460px; padding-top:18px; }
 body.compact-writing .mood-row { margin-top:9px; }
 @media(max-width:760px){ .preset-grid{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:460px){ .custom-color-row{align-items:flex-start; flex-direction:column}.preset-grid{grid-template-columns:1fr} }
+
+/* ===== Palette engine final fix =====
+   Dark mode now follows the selected palette instead of the legacy forest accent. */
+:root { --active-accent: #176b4d; --active-accent-strong: #0f553b; }
+body:not(.light) {
+  --accent: var(--active-accent);
+  --accent-strong: var(--active-accent-strong);
+}
+body.light {
+  --accent: var(--active-accent);
+  --accent-strong: var(--active-accent-strong);
+}
+body:not(.light) .button-primary { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+body:not(.light) .brand-mark { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 3px 3px 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+body:not(.light) .page-lined .editor-textarea { background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc((var(--editor-font-size) * var(--editor-line-height)) - 1px), color-mix(in srgb, var(--accent) 34%, transparent) calc(var(--editor-font-size) * var(--editor-line-height)), transparent calc((var(--editor-font-size) * var(--editor-line-height)) + 1px)); }
+.palette-card[data-palette="forest"] i { background:#176b4d; }
+.palette-card[data-palette="ink"] i { background:#b7772d; }
+.palette-card[data-palette="ocean"] i { background:#287b91; }
+.palette-card[data-palette="rose"] i { background:#a55267; }
+.palette-card[data-palette="lavender"] i { background:#715e9d; }
+.palette-card[data-palette="sunset"] i { background:#a65d35; }

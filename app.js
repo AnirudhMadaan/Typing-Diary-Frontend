@@ -103,9 +103,13 @@ function applyTheme() {
 
 function applyAppearance() {
   document.documentElement.dataset.palette = state.palette;
-  document.documentElement.style.setProperty("--accent", state.accent || getPaletteColor(state.palette));
-  document.documentElement.style.setProperty("--accent-strong", state.accent || getPaletteColor(state.palette));
-  document.documentElement.style.setProperty("--custom-accent", state.accent || "");
+  const activeAccent = state.accent || getPaletteColor(state.palette);
+  const activeStrong = state.accent ? state.accent : getPaletteColor(state.palette);
+  document.documentElement.style.setProperty("--active-accent", activeAccent);
+  document.documentElement.style.setProperty("--active-accent-strong", activeStrong);
+  document.documentElement.style.setProperty("--accent", activeAccent);
+  document.documentElement.style.setProperty("--accent-strong", activeStrong);
+  document.documentElement.style.setProperty("--custom-accent", activeAccent);
   document.documentElement.style.setProperty("--editor-font-size", `${state.fontSize}px`);
   document.documentElement.style.setProperty("--editor-line-height", state.lineHeight);
   document.documentElement.style.setProperty("--editor-width", `${state.editorWidth}px`);
