@@ -22,6 +22,7 @@ const state = {
   wordGoal: Number(localStorage.getItem("typingDiaryWordGoal") || 500),
   compact: localStorage.getItem("typingDiaryCompact") === "true",
   settingsTab: "page",
+  settingsSyncTimer: null,
 };
 
 const API_BASE = window.TYPING_DIARY_API_URL ||
@@ -105,26 +106,74 @@ function getPageProfile() {
 }
 function getGlobalProfile() { return { palette: state.palette, accent: state.accent, texture: state.texture, icon: state.icon, compact: state.compact }; }
 
-function savePageProfile(entryId) {
+function savePageProfile(entryId, serverEntry = null) {
   if (!entryId) return;
   const profiles = getPageProfiles();
   profiles[String(entryId)] = { ...getPageProfile(), global: getGlobalProfile(), savedAt: new Date().toISOString() };
   localStorage.setItem("typingDiaryPageProfiles", JSON.stringify(profiles));
+  if (serverEntry) serverEntry.pageProfile = profiles[String(entryId)];
 }
 
-function getEntryProfile(entryId) { return getPageProfiles()[String(entryId)] || null; }
-function getEntryGlobalProfile(entryId) { return getEntryProfile(entryId)?.global || null; }
+function getEntryProfile(entryId) {
+  const entry = state.entries.find((candidate) => candidate.id === entryId);
+  if (entry?.pageProfile) return { ...entry.pageProfile, global: entry.globalProfile || null };
+  return getPageProfiles()[String(entryId)] || null;
+}
+function getEntryGlobalProfile(entryId) {
+  const entry = state.entries.find((candidate) => candidate.id === entryId);
+  return entry?.globalProfile || getEntryProfile(entryId)?.global || null;
+}
 
 function restorePageProfile(entryId) {
   const profile = getEntryProfile(entryId);
   if (!profile) return false;
+  const global = profile.global || getEntryGlobalProfile(entryId);
   Object.assign(state, {
     font: profile.font || state.font, pageStyle: profile.pageStyle || state.pageStyle,
     fontSize: Number(profile.fontSize || state.fontSize), lineHeight: Number(profile.lineHeight || state.lineHeight),
     editorWidth: Number(profile.editorWidth || state.editorWidth), align: profile.align || state.align, textColor: profile.textColor || state.textColor
   });
-  persistAppearance(); applyAppearance();
+  if (global) Object.assign(state, { palette: global.palette || state.palette, accent: global.accent || state.accent, texture: global.texture !== false, icon: global.icon || state.icon, compact: global.compact === true });
+  persistAppearance(); applyTheme(); applyAppearance();
   return true;
+}
+
+async function syncGlobalSettings() {
+  if (!state.user) return;
+  try { await request("/api/settings", { method: "PUT", body: JSON.stringify({ page: getPageProfile(), global: getGlobalProfile() }) }); }
+  catch (error) { console.warn("Typing Diary: settings sync failed", error); }
+}
+
+function queueSettingsSync() {
+  window.clearTimeout(state.settingsSyncTimer);
+  state.settingsSyncTimer = window.setTimeout(syncGlobalSettings, 350);
+}
+
+async function loadRemoteSettings() {
+  if (!state.user) return;
+  try {
+    const data = await request("/api/settings");
+    if (data.settings?.global) Object.assign(state, data.settings.global);
+    if (data.settings?.page) Object.assign(state, data.settings.page);
+    persistAppearance(); applyTheme(); applyAppearance();
+  } catch (error) {
+    console.warn("Typing Diary: settings could not be loaded", error);
+  }
+}
+
+async function migrateLocalDesigns() {
+  const profiles = getPageProfiles();
+  const jobs = state.entries.filter((entry) => !entry.pageProfile && profiles[String(entry.id)]).slice(0, 20).map(async (entry) => {
+    const profile = profiles[String(entry.id)];
+    try {
+      const data = await request(`/api/entries/${entry.id}/design`, { method: "PATCH", body: JSON.stringify({ pageProfile: profile, globalProfile: profile.global || getGlobalProfile() }) });
+      if (data.entry) {
+        entry.pageProfile = data.entry.pageProfile;
+        entry.globalProfile = data.entry.globalProfile;
+      }
+    } catch (error) { console.warn("Typing Diary: design migration failed", error); }
+  });
+  if (jobs.length) await Promise.all(jobs);
 }
 
 function pageProfileLabel(profile) {
@@ -195,6 +244,7 @@ function persistAppearance() {
   localStorage.setItem("typingDiaryTextColor", state.textColor);
   localStorage.setItem("typingDiaryWordGoal", state.wordGoal);
   localStorage.setItem("typingDiaryCompact", state.compact);
+  queueSettingsSync();
 }
 
 function setAuthMode(mode) {
@@ -272,7 +322,7 @@ function renderEntries() {
         <h3>${escapeHtml(entry.title)}</h3>
         <p>${escapeHtml(entry.content)}</p>
         <div class="entry-meta">${formatDate(entry.createdAt)} ${entry.mood ? `· ${escapeHtml(entry.mood)}` : ""} · ${entry.words} words ${entry.wpm ? `· ${entry.wpm} WPM` : ""}</div>
-        ${(() => { const profile=getEntryProfile(entry.id)||{}; const global=getEntryGlobalProfile(entry.id)||{}; const page=profile.pageStyle||"blank"; const font=profile.font||"lora"; const ink=profile.textColor || "#26322b"; const palette=global.palette||state.palette; const previewText=(entry.content||"A quiet note from this day.").slice(0,72); return `<div class="history-design"><div class="history-preview page-${escapeHtml(page)} font-${font === "dm" ? "dm-sans" : font}" style="--history-ink:${escapeHtml(ink)}"><span>${escapeHtml(previewText)}</span></div><div class="history-design-meta"><span class="style-label">PAGE</span><span class="style-chip">${escapeHtml(page)}</span><span class="style-chip">${escapeHtml(font)}</span><span class="ink-dot" style="background:${escapeHtml(ink)}" title="Text color ${escapeHtml(ink)}"></span><span class="style-label global">GLOBAL</span><span class="mood-dot" style="background:${escapeHtml((global.accent || getPaletteColor(palette)))}" title="${escapeHtml(getPaletteColorName(palette))}"></span><span class="style-chip global-chip">${escapeHtml(getPaletteColorName(palette))}</span><span class="style-chip global-chip">${escapeHtml(global.icon||state.icon)}</span></div></div>`; })()}
+        ${(() => { const profile=getEntryProfile(entry.id)||{}; const global=getEntryGlobalProfile(entry.id)||{}; const page=profile.pageStyle||"blank"; const font=profile.font||"lora"; const ink=profile.textColor || "#26322b"; const previewText=(entry.content||"A quiet note from this day.").slice(0,72); return `<div class="history-design"><div class="history-preview page-${escapeHtml(page)} font-${font === "dm" ? "dm-sans" : font}" style="--history-ink:${escapeHtml(ink)}"><span>${escapeHtml(previewText)}</span></div><div class="history-design-meta"><span class="style-label">PAGE</span><span class="style-chip">${escapeHtml(page)}</span><span class="style-chip">${escapeHtml(font)}</span><span class="ink-dot" style="background:${escapeHtml(ink)}" title="Text color ${escapeHtml(ink)}"></span></div></div>`; })()}
       </div>
       <div class="entry-actions">
         <button class="entry-action" data-action="edit" data-id="${entry.id}" type="button">Edit</button>
@@ -285,6 +335,7 @@ function renderEntries() {
 async function loadEntries() {
   const data = await request("/api/entries");
   state.entries = data.entries || [];
+  await migrateLocalDesigns();
   renderStats();
   renderEntries();
   resetEditor(false);
@@ -365,7 +416,7 @@ async function saveEntry() {
     (!titleInput.value.trim() ? titleInput : editor).focus();
     return;
   }
-  const payload = { title: titleInput.value, content: editor.value, mood: state.mood, seconds: state.seconds };
+  const payload = { title: titleInput.value, content: editor.value, mood: state.mood, seconds: state.seconds, pageProfile: getPageProfile(), globalProfile: getGlobalProfile() };
   const method = state.editingId ? "PUT" : "POST";
   const url = state.editingId ? `/api/entries/${state.editingId}` : "/api/entries";
   try {
@@ -377,7 +428,7 @@ async function saveEntry() {
     } else {
       state.entries = [data.entry, ...state.entries];
     }
-    savePageProfile(data.entry.id);
+    savePageProfile(data.entry.id, data.entry);
     renderStats();
     renderEntries();
     const wasEditing = Boolean(state.editingId);
@@ -442,6 +493,7 @@ async function handleAuth(event) {
     // Authentication succeeded. Switch views immediately instead of allowing a
     // secondary archive request to make a successful login look like a failure.
     state.user = data.user;
+    await loadRemoteSettings();
     showApp();
 
     try {
@@ -557,6 +609,7 @@ async function boot() {
   try {
     const data = await request("/api/auth/me");
     state.user = data.user;
+    await loadRemoteSettings();
     showApp();
     await loadEntries();
   } catch {
