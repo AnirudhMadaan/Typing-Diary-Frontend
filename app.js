@@ -40,11 +40,13 @@ function escapeHtml(value) {
 }
 
 function showToast(message, type = "") {
+  document.body.dataset.toast = type || "ok";
   const toast = document.createElement("div");
   toast.className = `toast ${type}`.trim();
   toast.textContent = message;
+  toast.setAttribute("role", "status");
   $("toastRegion").append(toast);
-  window.setTimeout(() => toast.remove(), 3200);
+  window.setTimeout(() => { toast.remove(); if (!document.querySelector(".toast")) delete document.body.dataset.toast; }, 3200);
 }
 
 async function request(url, options = {}) {
@@ -66,8 +68,10 @@ async function request(url, options = {}) {
 }
 
 function applyTheme() {
+  document.documentElement.dataset.theme = state.theme;
   document.body.classList.toggle("light", state.theme === "light");
-  $("themeButton").textContent = state.theme === "light" ? "☀" : "☾";
+  $("themeButton").textContent = state.theme === "light" ? "☼" : "◐";
+  $("themeButton").title = state.theme === "light" ? "Use evening paper" : "Use daylight paper";
   localStorage.setItem("typingDiaryTheme", state.theme);
 }
 
@@ -389,6 +393,21 @@ function bindEvents() {
   $("linesToggle").addEventListener("change", (event) => { state.pageStyle = event.target.checked ? "lined" : "blank"; localStorage.setItem("typingDiaryPageStyle", state.pageStyle); applyAppearance(); });
   $("resetSettings").addEventListener("click", () => { state.font = "dm"; state.pageStyle = "lined"; localStorage.removeItem("typingDiaryFont"); localStorage.removeItem("typingDiaryPageStyle"); applyAppearance(); });
   $("newPromptButton").addEventListener("click", () => { const current = $("promptText").textContent; const options = prompts.filter((prompt) => prompt !== current); $("promptText").textContent = options[Math.floor(Math.random() * options.length)]; });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      $("customizeModal").hidden = true;
+      $("profileMenu").hidden = true;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !authView.hidden) {
+      event.preventDefault();
+      if (titleInput && !titleInput.closest("[hidden]")) saveEntry();
+    }
+  });
+  document.addEventListener("click", (event) => {
+    if (!$("profileMenu").hidden && !event.target.closest("#profileButton, #profileMenu")) {
+      $("profileMenu").hidden = true;
+    }
+  });
 }
 
 async function boot() {
