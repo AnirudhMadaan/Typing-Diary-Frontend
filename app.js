@@ -23,6 +23,7 @@ const state = {
   compact: localStorage.getItem("typingDiaryCompact") === "true",
   settingsTab: "page",
   settingsSyncTimer: null,
+  activeView: "studio",
 };
 
 const API_BASE = window.TYPING_DIARY_API_URL ||
@@ -253,7 +254,10 @@ function setAuthMode(mode) {
   $("authTitle").textContent = registering ? "Start your diary" : "Welcome back";
   $("authSubtitle").textContent = registering ? "Create an account and make space for your thoughts." : "Sign in to continue your story.";
   $("nameField").hidden = !registering;
+  $("usernameField").hidden = !registering;
+  $("bioField").hidden = !registering;
   $("nameInput").required = registering;
+  $("usernameInput").required = registering;
   $("authSubmitLabel").textContent = registering ? "Create account" : "Sign in";
   $("authSwitchPrompt").textContent = registering ? "Already have an account?" : "New here?";
   $("authSwitch").textContent = registering ? "Sign in instead" : "Create an account";
@@ -277,9 +281,24 @@ function showApp() {
   $("profileInitials").textContent = initials(state.user.name);
   $("profileName").textContent = state.user.name;
   $("profileEmail").textContent = state.user.email;
+  $("profileUsername").textContent = `@${state.user.username || "writer"}`;
+  $("profileBio").textContent = state.user.bio || "Add a short bio to your profile.";
   $("todayLabel").textContent = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" }).format(new Date());
+  setActiveView(state.activeView);
   applyTheme();
   applyAppearance();
+}
+
+function setActiveView(view) {
+  state.activeView = view === "journal" ? "journal" : "studio";
+  $("studioPage").hidden = state.activeView !== "studio";
+  $("journalPage").hidden = state.activeView !== "journal";
+  document.querySelectorAll(".main-nav-link").forEach((button) => {
+    const active = button.dataset.view === state.activeView;
+    button.classList.toggle("active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
 }
 
 function formatDate(value) {
@@ -394,6 +413,7 @@ function resetEditor(showMessage = true) {
 }
 
 function editEntry(entry) {
+  setActiveView("studio");
   stopTimer();
   state.editingId = entry.id;
   state.mood = entry.mood;
@@ -479,7 +499,11 @@ async function handleAuth(event) {
   const submitLabel = $("authSubmitLabel");
   const originalLabel = state.authMode === "register" ? "Create account" : "Sign in";
   const payload = { email: $("emailInput").value.trim(), password: $("passwordInput").value };
-  if (state.authMode === "register") payload.name = $("nameInput").value.trim();
+  if (state.authMode === "register") {
+    payload.name = $("nameInput").value.trim();
+    payload.username = $("usernameInput").value.trim().toLowerCase();
+    payload.bio = $("bioInput").value.trim();
+  }
 
   submitButton.disabled = true;
   submitLabel.textContent = state.authMode === "register" ? "Creating…" : "Signing in…";
@@ -514,9 +538,71 @@ async function handleAuth(event) {
   }
 }
 
+function openProfile() {
+  $("profileMenu").hidden = true;
+  $("profileNameInput").value = state.user.name || "";
+  $("profileUsernameInput").value = state.user.username || "";
+  $("profileBioInput").value = state.user.bio || "";
+  $("profileModalEmail").textContent = state.user.email || "";
+  $("profileProvider").textContent = state.user.provider === "google" ? "Connected with Google" : "Email and password account";
+  const avatar = $("profileAvatar");
+  if (state.user.avatar) {
+    avatar.src = state.user.avatar;
+    avatar.hidden = false;
+  } else {
+    avatar.removeAttribute("src");
+    avatar.hidden = true;
+  }
+  $("profileError").textContent = "";
+  $("profileModal").hidden = false;
+  $("profileNameInput").focus();
+}
+
+async function saveProfile(event) {
+  event.preventDefault();
+  $("profileError").textContent = "";
+  const submit = $("profileForm").querySelector('button[type="submit"]');
+  submit.disabled = true;
+  try {
+    const data = await request("/api/profile", {
+      method: "PATCH",
+      body: JSON.stringify({
+        name: $("profileNameInput").value.trim(),
+        username: $("profileUsernameInput").value.trim().toLowerCase(),
+        bio: $("profileBioInput").value.trim(),
+      }),
+    });
+    state.user = data.user;
+    showApp();
+    $("profileModal").hidden = true;
+    showToast("Profile updated.");
+  } catch (error) {
+    $("profileError").textContent = error.message;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
 function bindEvents() {
   authForm.addEventListener("submit", handleAuth);
   $("authSwitch").addEventListener("click", () => setAuthMode(state.authMode === "login" ? "register" : "login"));
+  $("googleLoginButton").addEventListener("click", () => {
+    $("googleLoginButton").disabled = true;
+    $("googleLoginButton").querySelector("span:last-child").textContent = "Connecting to Google…";
+    window.location.assign(`${API_BASE}/api/auth/google/start`);
+  });
+  $("usernameInput").addEventListener("input", (event) => {
+    event.target.value = event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+  });
+  $("profileUsernameInput").addEventListener("input", (event) => {
+    event.target.value = event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24);
+  });
+  $("profileForm").addEventListener("submit", saveProfile);
+  $("editProfileButton").addEventListener("click", openProfile);
+  $("closeProfile").addEventListener("click", () => { $("profileModal").hidden = true; });
+  $("cancelProfile").addEventListener("click", () => { $("profileModal").hidden = true; });
+  $("profileModal").addEventListener("click", (event) => { if (event.target === $("profileModal")) $("profileModal").hidden = true; });
+  document.querySelectorAll(".main-nav-link").forEach((button) => button.addEventListener("click", () => setActiveView(button.dataset.view)));
   $("passwordToggle").addEventListener("click", () => {
     const input = $("passwordInput");
     input.type = input.type === "password" ? "text" : "password";
@@ -546,9 +632,14 @@ function bindEvents() {
   });
   $("profileButton").addEventListener("click", () => { $("profileMenu").hidden = !$("profileMenu").hidden; });
   $("logoutButton").addEventListener("click", async () => {
-    await request("/api/auth/logout", { method: "POST" });
-    state.user = null;
-    showAuth();
+    try {
+      await request("/api/auth/logout", { method: "POST" });
+      state.user = null;
+      state.entries = [];
+      showAuth();
+    } catch (error) {
+      showToast(error.message, "error");
+    }
   });
   if ($("deleteAccountBtn")) $("deleteAccountBtn").addEventListener("click", deleteAccount);
   $("customizeButton").addEventListener("click", () => {
@@ -588,6 +679,7 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       $("customizeModal").hidden = true;
+      $("profileModal").hidden = true;
       $("profileMenu").hidden = true;
     }
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !authView.hidden) {
@@ -606,14 +698,22 @@ async function boot() {
   bindEvents();
   applyTheme();
   applyAppearance();
+  const query = new URLSearchParams(window.location.search);
+  const authResult = query.get("auth");
+  const authErrorMessage = query.get("auth_error");
+  if (authResult || authErrorMessage) {
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+  }
   try {
     const data = await request("/api/auth/me");
     state.user = data.user;
     await loadRemoteSettings();
     showApp();
     await loadEntries();
+    if (authResult === "success") showToast("Signed in with Google.");
   } catch {
     showAuth();
+    if (authErrorMessage) authError.textContent = authErrorMessage;
   }
 }
 

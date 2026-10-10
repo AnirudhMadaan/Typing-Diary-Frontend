@@ -48,10 +48,23 @@
           <h2 id="authTitle">Welcome back</h2>
           <p id="authSubtitle">Sign in to continue your story.</p>
         </div>
+        <button id="googleLoginButton" class="google-button" type="button">
+          <span class="google-g" aria-hidden="true">G</span>
+          <span>Continue with Google</span>
+        </button>
+        <div class="auth-divider"><span>or use email</span></div>
         <form id="authForm" class="auth-form">
           <label id="nameField" class="field" hidden>
-            <span>Your name</span>
+            <span>Display name</span>
             <input id="nameInput" type="text" autocomplete="name" minlength="2" maxlength="80" placeholder="How should we call you?" />
+          </label>
+          <label id="usernameField" class="field" hidden>
+            <span>Username</span>
+            <input id="usernameInput" type="text" autocomplete="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]{3,24}" placeholder="letters, numbers, underscores" />
+          </label>
+          <label id="bioField" class="field" hidden>
+            <span>Short bio <small>(optional)</small></span>
+            <textarea id="bioInput" maxlength="280" rows="2" placeholder="A few words about you"></textarea>
           </label>
           <label class="field">
             <span>Email address</span>
@@ -71,7 +84,6 @@
           </button>
           <p id="authError" class="form-error" role="alert"></p>
         </form>
-        <div class="auth-divider"><span>or</span></div>
         <p class="auth-switch">
           <span id="authSwitchPrompt">New here?</span>
           <button id="authSwitch" class="text-button" type="button">Create an account</button>
@@ -91,6 +103,10 @@
         </span>
       </a>
       <div class="topbar-actions">
+        <nav class="main-nav" aria-label="Diary sections">
+          <button class="main-nav-link active" data-view="studio" type="button" aria-current="page">Studio</button>
+          <button class="main-nav-link" data-view="journal" type="button">My Journal</button>
+        </nav>
         <button id="themeButton" class="icon-button" type="button" title="Toggle theme"
           aria-label="Toggle theme">☾</button>
         <button id="customizeButton" class="secondary-button" type="button">✦ Customize</button>
@@ -102,6 +118,9 @@
         <div id="profileMenu" class="profile-menu" hidden>
           <strong id="profileName">Writer</strong>
           <span id="profileEmail">you@example.com</span>
+          <span id="profileUsername">@writer</span>
+          <span id="profileBio" class="profile-bio"></span>
+          <button id="editProfileButton" class="menu-item" type="button">Edit profile</button>
           <button id="logoutButton" class="menu-item" type="button">↪ Sign out</button>
           <button id="deleteAccountBtn" class="btn btn-danger">Delete Account</button>
         </div>
@@ -109,6 +128,7 @@
     </header>
 
     <main class="dashboard">
+      <section id="studioPage" class="app-page">
       <section class="welcome-row">
         <div>
           <span class="eyebrow">PERSONAL NOTES</span>
@@ -191,8 +211,9 @@
           <button id="newPromptButton" class="prompt-link" type="button">Another thought <span>↗</span></button>
         </aside>
       </section>
+      </section>
 
-      <section class="entries-section">
+      <section id="journalPage" class="entries-section app-page" hidden>
         <div class="section-heading">
           <div><span class="eyebrow">YOUR ARCHIVE</span>
             <h2>Recent notes <span id="entryCountLabel">0</span></h2>
@@ -303,6 +324,30 @@
         </section>
       </div>
       <div class="settings-footer"><span>Account preferences sync across your devices.</span><button id="resetSettings" class="reset-link" type="button">Reset all appearance</button></div>
+    </section>
+  </div>
+
+  <div id="profileModal" class="modal-backdrop" hidden>
+    <section class="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">YOUR ACCOUNT</span>
+          <h2 id="profileModalTitle">Writer profile</h2>
+          <p class="settings-subtitle">Your name, username, and bio belong to your account.</p>
+        </div>
+        <button id="closeProfile" class="close-button" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="profile-identity">
+        <img id="profileAvatar" alt="" hidden />
+        <div><strong id="profileModalEmail"></strong><small id="profileProvider"></small></div>
+      </div>
+      <form id="profileForm" class="profile-form">
+        <label class="field"><span>Display name</span><input id="profileNameInput" type="text" minlength="2" maxlength="80" required /></label>
+        <label class="field"><span>Username</span><div class="username-input"><span>@</span><input id="profileUsernameInput" type="text" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]{3,24}" required /></div></label>
+        <label class="field"><span>Bio <small>(optional)</small></span><textarea id="profileBioInput" maxlength="280" rows="4" placeholder="Tell us a little about your writing life."></textarea></label>
+        <p id="profileError" class="form-error" role="alert"></p>
+        <div class="profile-form-actions"><button class="button button-primary" type="submit">Save profile</button><button id="cancelProfile" class="quiet-button" type="button">Cancel</button></div>
+      </form>
     </section>
   </div>
 
