@@ -1,0 +1,25 @@
+{
+  "name": "typing-diary-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./src/index.css -o ./dist/assets/app.css --minify && esbuild ./src/main.tsx --bundle --minify --format=esm --target=es2020 --outfile=./dist/assets/main.js && node ./scripts/copy-static.mjs",
+    "serve": "node ./scripts/serve.mjs",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^0.546.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.8.3"
+  }
+}
