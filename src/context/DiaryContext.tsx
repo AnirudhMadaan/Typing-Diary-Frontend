@@ -103,7 +103,7 @@ const asUser = (user: any): User => ({
   friendRequestsSent: user?.friendRequestsSent || [],
   friendRequestsReceived: user?.friendRequestsReceived || [],
   perFriendSettings: user?.perFriendSettings || {},
-  settings: { ...emptyUser.settings, ...(user?.settings || {}) },
+  settings: { ...emptyUser.settings, ...(user?.settings && typeof user.settings === 'object' ? user.settings : {}) },
 });
 
 export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -112,7 +112,8 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const displayedUser = currentUser || emptyUser;
+  // Normalize the user on every render so older/malformed API records cannot crash the UI.
+  const displayedUser = asUser(currentUser || emptyUser);
 
   const applyEntry = useCallback((entry: DiaryEntry) => {
     setEntries((previous) => {
@@ -130,11 +131,11 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       api<{ users: any[]; currentUser: any }>('/api/users'),
       api<{ entries: DiaryEntry[] }>('/api/entries'),
     ]);
-    const signedIn = asUser(me.user);
+    const signedIn = asUser(me?.user);
     setCurrentUser(signedIn);
     setUsers((directory.users || []).map(asUser));
     setEntries(journal.entries || []);
-    typewriterAudio.setSoundProfile(signedIn.settings.soundEnabled ? signedIn.settings.soundType : 'mute');
+    typewriterAudio.setSoundProfile(signedIn.settings?.soundEnabled ? (signedIn.settings?.soundType || 'mechanical') : 'mute');
   }, []);
 
   useEffect(() => {

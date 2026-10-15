@@ -36,8 +36,8 @@ function DiaryApp() {
       setStudioInitialVisibility('public');
       setStudioInitialAnonymous(false);
     } else {
-      setStudioInitialVisibility(currentUser.defaultPrivacy);
-      setStudioInitialAnonymous(currentUser.settings.defaultAnonymous);
+      setStudioInitialVisibility(currentUser?.defaultPrivacy || 'private');
+      setStudioInitialAnonymous(Boolean(currentUser?.settings?.defaultAnonymous));
     }
     setActiveTab('studio');
   };
@@ -57,7 +57,7 @@ function DiaryApp() {
           <span className="w-8 h-8 rounded-lg bg-[#2B2621] text-white flex items-center justify-center"><span>✎</span></span>
           <span className="font-serif-display text-lg font-bold">Typing Diary</span>
         </div>
-        <AuthModal isOpen onClose={() => undefined} />
+        <AuthModal isOpen defaultMode="login" onClose={() => undefined} />
       </div>
     );
   }
