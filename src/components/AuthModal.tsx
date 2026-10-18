@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDiary } from '../context/DiaryContext';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LogIn, Mail, RefreshCw, Sparkles, UserPlus } from 'lucide-react';
+import { TermsModal } from './TermsModal';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -55,6 +56,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
   const [localError, setLocalError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
 
+  // Mandatory Terms & Email Opt-in states
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+
   // Email verification flow states
   const [verificationStep, setVerificationStep] = useState<'form' | 'verify'>('form');
   const [verificationCode, setVerificationCode] = useState('');
@@ -66,6 +72,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
     bio: string;
     email: string;
     password: string;
+    termsAccepted: boolean;
+    emailOptIn: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -123,12 +131,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
       return;
     }
 
+    if (!agreeTerms) {
+      setLocalError('You must agree to the Terms & Conditions and Privacy Policy to create an account.');
+      return;
+    }
+
+    if (!emailOptIn) {
+      setLocalError('You must opt in to receive platform updates via email (Mandatory for account creation).');
+      return;
+    }
+
     const payload = {
       username: username.trim().toLowerCase(),
       displayName: displayName.trim(),
       bio: bio.trim(),
       email: email.trim(),
       password,
+      termsAccepted: true,
+      emailOptIn: true,
     };
 
     setPendingRegistration(payload);
@@ -354,7 +374,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
                 <PasswordInput autoComplete="new-password" minLength={8} value={confirmPassword} onChange={setConfirmPassword} className="mt-1 w-full px-3 py-2 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]" />
               </label>
             </div>
-            <button disabled={busy} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] disabled:opacity-60 rounded-xl transition-colors">
+
+            {/* Mandatory Terms & Conditions and Email Opt-in Checkboxes */}
+            <div className="space-y-2.5 pt-2 border-t border-[#EAE4DC]">
+              <label className="flex items-start gap-2.5 text-xs text-[#4A3E33] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  required
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-[#DDD6CB] accent-[#2B2621] shrink-0"
+                />
+                <span className="leading-snug">
+                  I have read and agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setIsTermsOpen(true)}
+                    className="font-semibold text-[#24201C] underline hover:text-[#8C765E]"
+                  >
+                    Terms & Conditions and Privacy Policy
+                  </button>{' '}
+                  <span className="text-[#B3402C] font-bold">*</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2.5 text-xs text-[#4A3E33] cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  required
+                  checked={emailOptIn}
+                  onChange={(e) => setEmailOptIn(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-[#DDD6CB] accent-[#2B2621] shrink-0"
+                />
+                <span className="leading-snug">
+                  I opt in to receive platform updates, announcements, and product news via email.{' '}
+                  <span className="font-semibold text-[#8C765E]">(Mandatory to create account)</span>{' '}
+                  <span className="text-[#B3402C] font-bold">*</span>
+                </span>
+              </label>
+            </div>
+
+            <button
+              disabled={busy || !agreeTerms || !emailOptIn}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors shadow-xs"
+            >
               <Mail className="w-4 h-4" />{busy ? 'Sending verification email…' : 'Continue to Email Verification'}
             </button>
           </form>
@@ -435,6 +498,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
           </form>
         )}
       </section>
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </div>
   );
 };

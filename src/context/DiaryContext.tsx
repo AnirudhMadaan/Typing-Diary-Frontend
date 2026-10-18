@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { DiaryEntry, User } from '../types/diary';
+import { DiaryEntry, User, AdminOverview, AdminUserMetric, BroadcastEmailPayload } from '../types/diary';
 import { typewriterAudio } from '../utils/audio';
 
 declare global {
@@ -24,6 +24,10 @@ const emptyUser: User = {
   friendRequestsSent: [],
   friendRequestsReceived: [],
   perFriendSettings: {},
+  isAdmin: false,
+  adminRank: null,
+  termsAccepted: true,
+  emailOptIn: true,
   settings: {
     soundEnabled: true,
     soundType: 'mechanical',
@@ -41,6 +45,8 @@ type RegistrationInput = {
   email: string;
   password: string;
   verificationCode?: string;
+  termsAccepted?: boolean;
+  emailOptIn?: boolean;
 };
 
 interface DiaryContextType {
@@ -75,6 +81,14 @@ interface DiaryContextType {
   canUserViewEntry: (entry: DiaryEntry, viewerId?: string) => boolean;
   exportDiary: (format: 'markdown' | 'json') => void;
   deleteAccount: () => Promise<void>;
+  // Admin Privileged Operations
+  getAdminOverview: () => Promise<AdminOverview>;
+  getAdminUsers: () => Promise<AdminUserMetric[]>;
+  sendBroadcastEmail: (payload: BroadcastEmailPayload) => Promise<{ success: boolean; message: string; total: number; sent: number; failed: number; devMode?: boolean }>;
+  getAdminPublicEntries: () => Promise<DiaryEntry[]>;
+  adminDeleteEntry: (entryId: string) => Promise<void>;
+  getSystemAnnouncement: () => Promise<{ text: string; type: string } | null>;
+  setSystemAnnouncement: (text: string, type?: string, active?: boolean) => Promise<void>;
 }
 
 const DiaryContext = createContext<DiaryContextType | undefined>(undefined);
@@ -103,6 +117,10 @@ const asUser = (user: any): User => ({
   friendRequestsSent: user?.friendRequestsSent || [],
   friendRequestsReceived: user?.friendRequestsReceived || [],
   perFriendSettings: user?.perFriendSettings || {},
+  isAdmin: Boolean(user?.isAdmin),
+  adminRank: user?.adminRank || null,
+  termsAccepted: user?.termsAccepted !== false,
+  emailOptIn: user?.emailOptIn !== false,
   settings: { ...emptyUser.settings, ...(user?.settings && typeof user.settings === 'object' ? user.settings : {}) },
 });
 
@@ -265,6 +283,8 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         email: input.email,
         password: input.password,
         verificationCode: input.verificationCode,
+        termsAccepted: input.termsAccepted ?? true,
+        emailOptIn: input.emailOptIn ?? true,
       }),
     });
     setCurrentUser(asUser(result.user));
@@ -430,6 +450,45 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setEntries([]);
   }), [withError]);
 
+  // Admin Privileged Operations
+  const getAdminOverview = useCallback(async (): Promise<AdminOverview> => {
+    return api<AdminOverview>('/api/admin/overview');
+  }, []);
+
+  const getAdminUsers = useCallback(async (): Promise<AdminUserMetric[]> => {
+    const data = await api<{ users: AdminUserMetric[] }>('/api/admin/users');
+    return data.users || [];
+  }, []);
+
+  const sendBroadcastEmail = useCallback(async (payload: BroadcastEmailPayload) => {
+    return api<{ success: boolean; message: string; total: number; sent: number; failed: number; devMode?: boolean }>(
+      '/api/admin/broadcast-email',
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+  }, []);
+
+  const getAdminPublicEntries = useCallback(async (): Promise<DiaryEntry[]> => {
+    const data = await api<{ entries: DiaryEntry[] }>('/api/admin/public-entries');
+    return data.entries || [];
+  }, []);
+
+  const adminDeleteEntry = useCallback(async (entryId: string) => {
+    await api(`/api/admin/entries/${encodeURIComponent(entryId)}`, { method: 'DELETE' });
+    setEntries((prev) => prev.filter((e) => e.id !== entryId));
+  }, []);
+
+  const getSystemAnnouncement = useCallback(async () => {
+    const data = await api<{ announcement: { text: string; type: string } | null }>('/api/announcement');
+    return data.announcement || null;
+  }, []);
+
+  const setSystemAnnouncement = useCallback(async (text: string, type = 'info', active = true) => {
+    await api('/api/admin/announcement', {
+      method: 'POST',
+      body: JSON.stringify({ text, type, active }),
+    });
+  }, []);
+
   const value = useMemo<DiaryContextType>(() => ({
     currentUser: displayedUser,
     isAuthenticated: currentUser !== null,
@@ -462,11 +521,19 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     canUserViewEntry,
     exportDiary,
     deleteAccount,
+    getAdminOverview,
+    getAdminUsers,
+    sendBroadcastEmail,
+    getAdminPublicEntries,
+    adminDeleteEntry,
+    getSystemAnnouncement,
+    setSystemAnnouncement,
   }), [
     displayedUser, currentUser, isLoading, users, entries, error, refresh, login, sendVerificationCode, register, loginWithGoogle, logout,
     updateUserProfile, updateUserSettings, saveAppearance, setPaperTheme, createEntry, updateEntry, deleteEntry, toggleReaction, addComment,
     sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend, toggleFriendDiaryAccess, searchUsers,
     canUserViewEntry, exportDiary, deleteAccount,
+    getAdminOverview, getAdminUsers, sendBroadcastEmail, getAdminPublicEntries, adminDeleteEntry, getSystemAnnouncement, setSystemAnnouncement,
   ]);
 
   return <DiaryContext.Provider value={value}>{children}</DiaryContext.Provider>;

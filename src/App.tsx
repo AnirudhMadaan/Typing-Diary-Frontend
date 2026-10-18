@@ -14,19 +14,29 @@ import { EntryModal } from './components/EntryModal';
 import { AuthModal } from './components/AuthModal';
 import { ProfileModal } from './components/ProfileModal';
 import { CustomizeModal } from './components/CustomizeModal';
+import { AdminPanel } from './components/AdminPanel';
+import { TermsModal } from './components/TermsModal';
+import { DiaryTab } from './components/Navbar';
 import { DiaryEntry, VisibilityType } from './types/diary';
-import { X } from 'lucide-react';
+import { X, Bell, ShieldCheck } from 'lucide-react';
 
 function DiaryApp() {
-  const { currentUser, isAuthenticated, isLoading, error, clearError } = useDiary();
-  const [activeTab, setActiveTab] = useState<'blog' | 'studio' | 'my-journal' | 'friends'>('blog');
+  const { currentUser, isAuthenticated, isLoading, error, clearError, getSystemAnnouncement } = useDiary();
+  const [activeTab, setActiveTab] = useState<DiaryTab>('blog');
   const [selectedEntry, setSelectedEntry] = useState<DiaryEntry | null>(null);
   const [studioInitialVisibility, setStudioInitialVisibility] = useState<VisibilityType>('public');
   const [studioInitialAnonymous, setStudioInitialAnonymous] = useState<boolean>(false);
 
-  // Auth & Profile modal states
+  // Auth, Profile & Terms modal states
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [banner, setBanner] = useState<{ text: string; type: string } | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    getSystemAnnouncement().then(setBanner).catch(() => undefined);
+  }, [getSystemAnnouncement]);
 
   const handleOpenNewEntry = (preset?: 'public' | 'anonymous') => {
     if (preset === 'anonymous') {
@@ -72,6 +82,29 @@ function DiaryApp() {
         onOpenCustomize={() => setIsCustomizeModalOpen(true)}
       />
 
+      {/* Platform Announcement Banner */}
+      {banner && !bannerDismissed && (
+        <div className={`border-b text-xs py-2 px-4 flex items-center justify-between gap-3 ${
+          banner.type === 'warning'
+            ? 'bg-[#FAF0E1] border-[#E8DEC8] text-[#8C5D23]'
+            : banner.type === 'success'
+            ? 'bg-[#EAF5EC] border-[#BDE0C4] text-[#2F6136]'
+            : 'bg-[#FAF4EB] border-[#EAE4DC] text-[#4A3E33]'
+        }`}>
+          <div className="max-w-7xl mx-auto flex items-center gap-2 flex-1 justify-center font-medium">
+            <Bell className="w-3.5 h-3.5 shrink-0" />
+            <span>{banner.text}</span>
+          </div>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            aria-label="Dismiss banner"
+            className="text-xs opacity-70 hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <main className="flex-1">
         {error && (
           <div role="alert" className="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
@@ -110,6 +143,10 @@ function DiaryApp() {
             onOpenTypewriter={() => handleOpenNewEntry()}
           />
         )}
+
+        {activeTab === 'admin' && (
+          <AdminPanel />
+        )}
       </main>
 
       {/* Reading Modal */}
@@ -124,6 +161,7 @@ function DiaryApp() {
         onClose={() => setIsProfileModalOpen(false)}
       />
       <CustomizeModal isOpen={isCustomizeModalOpen} onClose={() => setIsCustomizeModalOpen(false)} />
+      <TermsModal isOpen={isTermsModalOpen} onClose={() => setIsTermsModalOpen(false)} />
 
       {/* Quiet, elegant footer (conforming to Anti-Slop constitution) */}
       <footer className="border-t border-[#EAE4DC] py-8 bg-[#FAF8F5] text-xs text-[#7A6C5E]">
@@ -152,6 +190,12 @@ function DiaryApp() {
               className="hover:text-[#24201C] transition-colors"
             >
               Typewriter Studio
+            </button>
+            <button
+              onClick={() => setIsTermsModalOpen(true)}
+              className="hover:text-[#24201C] transition-colors"
+            >
+              Terms & Conditions
             </button>
           </div>
         </div>

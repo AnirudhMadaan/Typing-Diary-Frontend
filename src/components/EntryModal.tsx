@@ -18,6 +18,7 @@ import {
   MapPin,
   CloudSun,
   Image as ImageIcon,
+  ShieldCheck,
 } from 'lucide-react';
 import { typewriterAudio } from '../utils/audio';
 
@@ -102,10 +103,16 @@ export const EntryModal: React.FC<EntryModalProps> = ({ entry: initialEntry, onC
             )}
 
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-xs font-semibold text-[#24201C]">
                   {entry.isAnonymous ? 'Anonymous Writer' : entry.authorName}
                 </p>
+                {!entry.isAnonymous && entry.authorIsAdmin && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md bg-[#2B2621] text-[#F5F2EB] border border-[#8C765E]/50 shadow-2xs">
+                    <ShieldCheck className="w-2.5 h-2.5 text-[#E6C35C]" />
+                    {entry.authorRank || 'ADMIN'}
+                  </span>
+                )}
                 {entry.isAnonymous && entry.anonymousAlias && (
                   <span className="text-[11px] text-[#8C7A6B]">
                     ({entry.anonymousAlias})
@@ -325,6 +332,12 @@ export const EntryModal: React.FC<EntryModalProps> = ({ entry: initialEntry, onC
                           />
                         )}
                         <span className="font-semibold text-[#24201C]">{comment.authorName}</span>
+                        {!comment.isAnonymous && comment.authorIsAdmin && (
+                          <span className="inline-flex items-center gap-0.5 px-1 py-0.2 text-[8px] font-bold uppercase tracking-wider rounded bg-[#2B2621] text-[#F5F2EB] border border-[#8C765E]/40">
+                            <ShieldCheck className="w-2 h-2 text-[#E6C35C]" />
+                            {comment.authorRank || 'ADMIN'}
+                          </span>
+                        )}
                       </div>
                       <span className="text-[11px] text-[#8C7D6F]">
                         {new Date(comment.createdAt).toLocaleDateString()}

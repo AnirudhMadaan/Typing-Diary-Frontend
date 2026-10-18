@@ -215,9 +215,17 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
                             {friend.online && <span className="absolute right-0 bottom-0 w-3 h-3 rounded-full bg-[#6B8D57] border-2 border-[#FCFBF9]" title="Online now" />}
                           </div>
                           <div>
-                            <h3 className="font-serif-display text-base font-bold text-[#24201C]">
-                              {friend.displayName}
-                            </h3>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h3 className="font-serif-display text-base font-bold text-[#24201C]">
+                                {friend.displayName}
+                              </h3>
+                              {friend.isAdmin && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md bg-[#2B2621] text-[#F5F2EB] border border-[#8C765E]/50 shadow-2xs">
+                                  <ShieldCheck className="w-2.5 h-2.5 text-[#E6C35C]" />
+                                  {friend.adminRank || 'ADMIN'}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-[#8A7969] font-mono-type">@{friend.username}</p>
                             <p className="text-[11px] text-[#A39587] mt-0.5">{friend.online ? 'Online now' : `Joined ${new Date(friend.joinedDate).toLocaleDateString()}`}</p>
                           </div>
@@ -555,9 +563,17 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
                     <div className="flex items-center gap-3">
                       <UserAvatar user={writer} className="w-12 h-12 rounded-full object-cover border border-[#D5CBBB] text-lg" />
                       <div>
-                        <h4 className="font-serif-display text-base font-bold text-[#24201C]">
-                          {writer.displayName}
-                        </h4>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h4 className="font-serif-display text-base font-bold text-[#24201C]">
+                            {writer.displayName}
+                          </h4>
+                          {writer.isAdmin && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-md bg-[#2B2621] text-[#F5F2EB] border border-[#8C765E]/50 shadow-2xs">
+                              <ShieldCheck className="w-2.5 h-2.5 text-[#E6C35C]" />
+                              {writer.adminRank || 'ADMIN'}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-[#8A7969] font-mono-type">@{writer.username}</p>
                       </div>
                     </div>

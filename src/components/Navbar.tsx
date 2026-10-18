@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BookOpen, Check, ChevronDown, Moon, Palette, PenTool, Settings2, Sun, Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Moon, Palette, PenTool, Settings2, Sun, Volume2, VolumeX, ShieldCheck } from 'lucide-react';
 import { useDiary } from '../context/DiaryContext';
 import { typewriterAudio, SOUND_PROFILES, type SoundProfileType } from '../utils/audio';
 import {
@@ -10,7 +10,7 @@ import {
   type GlobalAppearance,
 } from '../utils/appearance';
 
-export type DiaryTab = 'blog' | 'studio' | 'my-journal' | 'friends';
+export type DiaryTab = 'blog' | 'studio' | 'my-journal' | 'friends' | 'admin';
 
 const palettes = Object.values(appearancePalettes);
 
@@ -35,11 +35,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   const appearanceRef = useRef<HTMLDivElement>(null);
   const soundRef = useRef<HTMLDivElement>(null);
   const incomingRequestCount = currentUser.friendRequestsReceived.length;
-  const navItems: { id: DiaryTab; label: string }[] = [
+  const navItems: { id: DiaryTab; label: string; icon?: React.ReactNode }[] = [
     { id: 'blog', label: 'Community Blog' },
     { id: 'studio', label: 'Typewriter Studio' },
     { id: 'my-journal', label: 'My Journal' },
     { id: 'friends', label: 'Friends & Circles' },
+    ...(currentUser.isAdmin
+      ? [{ id: 'admin' as DiaryTab, label: 'Admin Panel', icon: <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> }]
+      : []),
   ];
 
   // Close the account menu / appearance panel when the user taps anywhere
@@ -153,8 +156,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-[#6B5E52]">
-          {navItems.map(({ id, label }) => (
-            <button key={id} onClick={() => setActiveTab(id)} className={`relative whitespace-nowrap py-1 transition-colors ${activeTab === id ? 'text-[#1F1B17] font-semibold' : 'hover:text-[#1F1B17]'}`}>
+          {navItems.map(({ id, label, icon }) => (
+            <button key={id} onClick={() => setActiveTab(id)} className={`relative whitespace-nowrap py-1 transition-colors flex items-center gap-1.5 ${activeTab === id ? 'text-[#1F1B17] font-semibold' : 'hover:text-[#1F1B17]'}`}>
+              {icon}
               {label}
               {id === 'friends' && incomingRequestCount > 0 && (
                 <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-[#B3402C]" title={`${incomingRequestCount} pending requests`} />
@@ -312,6 +316,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button onClick={() => { setIsMenuOpen(false); onOpenCustomize(); }} className="w-full flex items-center gap-2 text-left px-2.5 py-2 text-xs text-[#473D33] hover:bg-[#F2EDE4] rounded-lg">
                   <Settings2 className="w-3.5 h-3.5" /> Writing page & layout
                 </button>
+                {currentUser.isAdmin && (
+                  <button onClick={() => { setIsMenuOpen(false); setActiveTab('admin'); }} className="w-full flex items-center gap-2 text-left px-2.5 py-2 text-xs font-semibold text-[#24201C] bg-[#FAF4EB] hover:bg-[#F3E8D8] rounded-lg my-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> Admin Dashboard
+                  </button>
+                )}
                 <button onClick={() => { setIsMenuOpen(false); void logout().catch(() => undefined); }} className="w-full flex items-center gap-2 text-left px-2.5 py-2 text-xs text-[#96473D] hover:bg-[#F7E9E5] rounded-lg">
                   <BookOpen className="w-3.5 h-3.5" /> Sign out
                 </button>
@@ -328,9 +337,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       <nav className="lg:hidden flex items-center justify-around px-2 py-2 border-t border-[#EAE4DC] text-[11px] font-medium text-[#6B5E52] bg-[#FAF8F5]">
-        {navItems.map(({ id, label }) => (
-          <button key={id} onClick={() => setActiveTab(id)} className={`py-1 px-1 relative ${activeTab === id ? 'text-[#1F1B17] font-semibold' : ''}`}>
-            {id === 'blog' ? 'Blog' : id === 'studio' ? 'Typewriter' : id === 'my-journal' ? 'Journal' : 'Friends'}
+        {navItems.map(({ id, label, icon }) => (
+          <button key={id} onClick={() => setActiveTab(id)} className={`py-1 px-1 relative flex items-center gap-1 ${activeTab === id ? 'text-[#1F1B17] font-semibold' : ''}`}>
+            {icon}
+            {id === 'blog' ? 'Blog' : id === 'studio' ? 'Typewriter' : id === 'my-journal' ? 'Journal' : id === 'friends' ? 'Friends' : 'Admin'}
             {id === 'friends' && incomingRequestCount > 0 && <span className="absolute -right-1 top-0 w-1.5 h-1.5 rounded-full bg-[#B3402C]" />}
           </button>
         ))}
