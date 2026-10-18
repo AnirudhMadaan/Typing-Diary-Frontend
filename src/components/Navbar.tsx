@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, Moon, Palette, PenTool, Settings2, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useDiary } from '../context/DiaryContext';
 import {
@@ -29,6 +29,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const appearanceRef = useRef<HTMLDivElement>(null);
   const incomingRequestCount = currentUser.friendRequestsReceived.length;
   const navItems: { id: DiaryTab; label: string }[] = [
     { id: 'blog', label: 'Community Blog' },
@@ -36,6 +38,37 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'my-journal', label: 'My Journal' },
     { id: 'friends', label: 'Friends & Circles' },
   ];
+
+  // Close the account menu / appearance panel when the user taps anywhere
+  // outside of it (pointerdown also covers touch screens), or presses Escape.
+  useEffect(() => {
+    if (!isMenuOpen && !isAppearanceOpen) return;
+    const closeOnOutsidePress = (event: Event) => {
+      const target = event.target as Node | null;
+      if (isMenuOpen && menuRef.current && target && !menuRef.current.contains(target)) setIsMenuOpen(false);
+      if (isAppearanceOpen && appearanceRef.current && target && !appearanceRef.current.contains(target)) setIsAppearanceOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+        setIsAppearanceOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', closeOnOutsidePress);
+    document.addEventListener('touchstart', closeOnOutsidePress, { passive: true });
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePress);
+      document.removeEventListener('touchstart', closeOnOutsidePress);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isMenuOpen, isAppearanceOpen]);
+
+  // Changing page also dismisses any open menu.
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsAppearanceOpen(false);
+  }, [activeTab]);
 
   useEffect(() => {
     applyAppearance(
@@ -121,9 +154,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className="relative">
+          <div className="relative" ref={appearanceRef}>
             <button
-              onClick={() => setIsAppearanceOpen((open) => !open)}
+              onClick={() => { setIsMenuOpen(false); setIsAppearanceOpen((open) => !open); }}
               aria-expanded={isAppearanceOpen}
               aria-label="App appearance"
               data-testid="button-app-appearance"
@@ -206,9 +239,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             {currentUser.settings.soundEnabled ? <Volume2 className="w-4 h-4 text-[#8C765E]" /> : <VolumeX className="w-4 h-4 text-[#A89E92]" />}
           </button>
 
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setIsMenuOpen((open) => !open)}
+              onClick={() => { setIsAppearanceOpen(false); setIsMenuOpen((open) => !open); }}
               className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 text-xs text-[#4F4439] bg-[#F2EDE4] hover:bg-[#E8E1D5] border border-[#DDD6CB] rounded-lg"
               aria-expanded={isMenuOpen}
             >

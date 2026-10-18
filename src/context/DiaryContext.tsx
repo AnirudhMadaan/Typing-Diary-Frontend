@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DiaryEntry, User } from '../types/diary';
 import { typewriterAudio } from '../utils/audio';
 
@@ -112,8 +112,11 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [entries, setEntries] = useState<DiaryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  // Normalize the user on every render so older/malformed API records cannot crash the UI.
-  const displayedUser = asUser(currentUser || emptyUser);
+  const currentUserRef = useRef<User | null>(null);
+  currentUserRef.current = currentUser;
+  // Normalize the user so older/malformed API records cannot crash the UI.
+  // Memoised: a new object on every render made every consumer re-render.
+  const displayedUser = useMemo(() => asUser(currentUser || emptyUser), [currentUser]);
 
   const applyEntry = useCallback((entry: DiaryEntry) => {
     setEntries((previous) => {
@@ -162,18 +165,68 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => { active = false; };
   }, []);
 
+  // Cheap refreshers: friend actions only need the directory and the entries
+  // list, not a full session + directory + entries reload.
+  const refreshDirectory = useCallback(async () => {
+    const directory = await api<{ users: any[] }>('/api/users');
+    setUsers((directory.users || []).map(asUser));
+  }, []);
+
+  const refreshEntries = useCallback(async () => {
+    const journal = await api<{ entries: DiaryEntry[] }>('/api/entries');
+    setEntries(journal.entries || []);
+  }, []);
+
+  // Merge only the social fields of an account, so a slow response can never
+  // overwrite newer profile or appearance settings.
+  const applySocialState = useCallback((incoming: any): boolean => {
+    const previous = currentUserRef.current;
+    if (!incoming || !previous) return false;
+    const next = asUser(incoming);
+    const sameList = (a: string[] = [], b: string[] = []) => a.length === b.length && a.every((id, index) => id === b[index]);
+    const friendsChanged = !sameList(previous.friendIds, next.friendIds);
+    const unchanged = !friendsChanged
+      && sameList(previous.friendRequestsSent, next.friendRequestsSent)
+      && sameList(previous.friendRequestsReceived, next.friendRequestsReceived)
+      && JSON.stringify(previous.perFriendSettings || {}) === JSON.stringify(next.perFriendSettings || {});
+    if (!unchanged) {
+      setCurrentUser((user) => user ? {
+        ...user,
+        friendIds: next.friendIds,
+        friendRequestsSent: next.friendRequestsSent,
+        friendRequestsReceived: next.friendRequestsReceived,
+        perFriendSettings: next.perFriendSettings,
+      } : user);
+    }
+    return friendsChanged;
+  }, []);
+
   useEffect(() => {
     if (!currentUser) return;
+    let stopped = false;
     const pingAndRefreshPresence = () => {
-      api('/api/presence', { method: 'POST' })
-        .then(() => api<{ users: any[] }>('/api/users'))
-        .then((result) => setUsers((result.users || []).map(asUser)))
+      if (document.visibilityState === 'hidden') return;
+      Promise.all([
+        api<{ user?: any }>('/api/presence', { method: 'POST' }),
+        api<{ users: any[] }>('/api/users'),
+      ])
+        .then(([presence, directory]) => {
+          if (stopped) return;
+          setUsers((directory.users || []).map(asUser));
+          // Picks up requests that arrived from other people while this tab was open.
+          if (applySocialState(presence?.user)) void refreshEntries().catch(() => undefined);
+        })
         .catch(() => undefined);
     };
     pingAndRefreshPresence();
-    const interval = window.setInterval(pingAndRefreshPresence, 60_000);
-    return () => window.clearInterval(interval);
-  }, [currentUser?.id]);
+    const interval = window.setInterval(pingAndRefreshPresence, 30_000);
+    document.addEventListener('visibilitychange', pingAndRefreshPresence);
+    return () => {
+      stopped = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', pingAndRefreshPresence);
+    };
+  }, [currentUser?.id, applySocialState, refreshEntries]);
 
   const withError = useCallback(async <T,>(operation: () => Promise<T>): Promise<T> => {
     try {
@@ -303,15 +356,39 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     applyEntry(result.entry);
   }), [applyEntry, withError]);
 
-  const mutateFriend = useCallback((url: string, method: string, body?: object) => withError(async () => {
-    await api(url, { method, ...(body ? { body: JSON.stringify(body) } : {}) });
-    await refresh();
-  }), [refresh, withError]);
+  // The server answers every friend action with the updated account, so the
+  // UI updates from that single response instead of reloading everything.
+  const mutateFriend = useCallback((url: string, method: string, body?: object, { reloadEntries = false } = {}) => withError(async () => {
+    const result = await api<{ user?: any } | undefined>(url, { method, ...(body ? { body: JSON.stringify(body) } : {}) });
+    if (result?.user) {
+      applySocialState(result.user);
+    } else {
+      await refresh();
+      return;
+    }
+    // Directory / entries only need a background refresh; never block the button on them.
+    void refreshDirectory().catch(() => undefined);
+    if (reloadEntries) void refreshEntries().catch(() => undefined);
+  }), [applySocialState, refresh, refreshDirectory, refreshEntries, withError]);
 
-  const sendFriendRequest = useCallback((userId: string) => mutateFriend('/api/friends/requests', 'POST', { userId }), [mutateFriend]);
-  const acceptFriendRequest = useCallback((userId: string) => mutateFriend(`/api/friends/requests/${encodeURIComponent(userId)}/accept`, 'POST'), [mutateFriend]);
+  const sendFriendRequest = useCallback(async (userId: string) => {
+    // Optimistic: show "Request Sent" immediately, roll back if the server refuses.
+    const previous = currentUser;
+    setCurrentUser((user) => user && !user.friendRequestsSent.includes(userId)
+      ? { ...user, friendRequestsSent: [...user.friendRequestsSent, userId] }
+      : user);
+    try {
+      await mutateFriend('/api/friends/requests', 'POST', { userId }, { reloadEntries: true });
+    } catch (reason) {
+      setCurrentUser((user) => user && previous
+        ? { ...user, friendRequestsSent: previous.friendRequestsSent, friendIds: previous.friendIds }
+        : user);
+      throw reason;
+    }
+  }, [currentUser, mutateFriend]);
+  const acceptFriendRequest = useCallback((userId: string) => mutateFriend(`/api/friends/requests/${encodeURIComponent(userId)}/accept`, 'POST', undefined, { reloadEntries: true }), [mutateFriend]);
   const declineFriendRequest = useCallback((userId: string) => mutateFriend(`/api/friends/requests/${encodeURIComponent(userId)}`, 'DELETE'), [mutateFriend]);
-  const removeFriend = useCallback((userId: string) => mutateFriend(`/api/friends/${encodeURIComponent(userId)}`, 'DELETE'), [mutateFriend]);
+  const removeFriend = useCallback((userId: string) => mutateFriend(`/api/friends/${encodeURIComponent(userId)}`, 'DELETE', undefined, { reloadEntries: true }), [mutateFriend]);
   const toggleFriendDiaryAccess = useCallback((userId: string, allowed: boolean) => (
     mutateFriend(`/api/friends/${encodeURIComponent(userId)}/settings`, 'PATCH', { canViewFriendOnlyPosts: allowed })
   ), [mutateFriend]);

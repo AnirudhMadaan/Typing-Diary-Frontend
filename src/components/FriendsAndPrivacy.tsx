@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useDiary } from '../context/DiaryContext';
 import { DiaryEntry, User } from '../types/diary';
 import { 
@@ -42,8 +42,27 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
     acceptFriendRequest, 
     declineFriendRequest, 
     removeFriend,
-    toggleFriendDiaryAccess
+    toggleFriendDiaryAccess,
+    error,
+    clearError,
   } = useDiary();
+
+  // Per-action "busy" tracking: gives instant feedback on the tapped button and
+  // blocks double taps, which used to fire the same request twice.
+  const busyRef = useRef<Set<string>>(new Set());
+  const [busyKeys, setBusyKeys] = useState<string[]>([]);
+  const isBusy = (key: string) => busyKeys.includes(key);
+  const runAction = (key: string, action: () => Promise<void>) => {
+    if (busyRef.current.has(key)) return;
+    busyRef.current.add(key);
+    setBusyKeys([...busyRef.current]);
+    action()
+      .catch(() => undefined)
+      .finally(() => {
+        busyRef.current.delete(key);
+        setBusyKeys([...busyRef.current]);
+      });
+  };
 
   const [activeTab, setActiveTab] = useState<'my-friends' | 'requests' | 'explore' | 'privacy-matrix'>('my-friends');
   const [selectedFriendForPreview, setSelectedFriendForPreview] = useState<User | null>(null);
@@ -149,6 +168,13 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
         </div>
       </div>
 
+      {error && (
+        <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-[#F2C4BE] bg-[#FDEAE8] px-3 py-2 text-xs text-[#8B3328]">
+          <span>{error}</span>
+          <button type="button" onClick={clearError} aria-label="Dismiss message"><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
       {/* TAB 1: My Friends */}
       {activeTab === 'my-friends' && (
         <div className="space-y-6">
@@ -218,8 +244,9 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
                           {/* Interactive Toggle Switch */}
                           <button
                             type="button"
-                            onClick={() => { void toggleFriendDiaryAccess(friend.id, !canView).catch(() => undefined); }}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            onClick={() => runAction(`access-${friend.id}`, () => toggleFriendDiaryAccess(friend.id, !canView))}
+                            disabled={isBusy(`access-${friend.id}`)}
+                            className={`disabled:opacity-60 relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                               canView ? 'bg-[#3E342B]' : 'bg-[#D1C9BE]'
                             }`}
                             aria-label={`Toggle diary visibility for ${friend.displayName}`}
@@ -257,10 +284,11 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
                       </button>
 
                       <button
-                        onClick={() => { void removeFriend(friend.id).catch(() => undefined); }}
-                        className="text-[#96473D] hover:text-[#7A362D] text-[11px] transition-colors"
+                        onClick={() => runAction(`remove-${friend.id}`, () => removeFriend(friend.id))}
+                        disabled={isBusy(`remove-${friend.id}`)}
+                        className="text-[#96473D] hover:text-[#7A362D] text-[11px] transition-colors disabled:opacity-60"
                       >
-                        Remove Friend
+                        {isBusy(`remove-${friend.id}`) ? 'Removing…' : 'Remove Friend'}
                       </button>
                     </div>
                   </div>
@@ -361,16 +389,18 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
 
                     <div className="flex items-center gap-2 self-end sm:self-auto">
                       <button
-                        onClick={() => { void acceptFriendRequest(requestingUser.id).catch(() => undefined); }}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] rounded-lg transition-colors whitespace-nowrap"
+                        onClick={() => runAction(`accept-${requestingUser.id}`, () => acceptFriendRequest(requestingUser.id))}
+                        disabled={isBusy(`accept-${requestingUser.id}`) || isBusy(`decline-${requestingUser.id}`)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] rounded-lg transition-colors whitespace-nowrap disabled:opacity-60"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>Accept Friend</span>
+                        <span>{isBusy(`accept-${requestingUser.id}`) ? 'Accepting…' : 'Accept Friend'}</span>
                       </button>
 
                       <button
-                        onClick={() => { void declineFriendRequest(requestingUser.id).catch(() => undefined); }}
-                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#736558] hover:text-[#963A2E] hover:bg-[#EFE9DF] rounded-lg transition-colors whitespace-nowrap"
+                        onClick={() => runAction(`decline-${requestingUser.id}`, () => declineFriendRequest(requestingUser.id))}
+                        disabled={isBusy(`accept-${requestingUser.id}`) || isBusy(`decline-${requestingUser.id}`)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#736558] hover:text-[#963A2E] hover:bg-[#EFE9DF] rounded-lg transition-colors whitespace-nowrap disabled:opacity-60"
                       >
                         <X className="w-3.5 h-3.5" />
                         <span>Decline</span>
@@ -396,7 +426,7 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-[11px] text-[#8C7A68]">Pending approval...</span>
-                      <button onClick={() => { void declineFriendRequest(targetUser.id).catch(() => undefined); }} className="text-[11px] text-[#8D463C] hover:underline">Cancel</button>
+                      <button onClick={() => runAction(`cancel-${targetUser.id}`, () => declineFriendRequest(targetUser.id))} disabled={isBusy(`cancel-${targetUser.id}`)} className="text-[11px] text-[#8D463C] hover:underline disabled:opacity-60">{isBusy(`cancel-${targetUser.id}`) ? 'Cancelling…' : 'Cancel'}</button>
                     </div>
                   </div>
                 ))}
@@ -470,8 +500,9 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
                       </td>
                       <td className="py-3 px-3">
                         <button
-                          onClick={() => { void toggleFriendDiaryAccess(f.id, !canView).catch(() => undefined); }}
-                          className="px-2.5 py-1 text-[11px] rounded border border-[#DDD5C7] hover:bg-[#EFE9DF] text-[#473D33]"
+                          onClick={() => runAction(`access-${f.id}`, () => toggleFriendDiaryAccess(f.id, !canView))}
+                          disabled={isBusy(`access-${f.id}`)}
+                          className="px-2.5 py-1 text-[11px] rounded border border-[#DDD5C7] hover:bg-[#EFE9DF] text-[#473D33] disabled:opacity-60"
                         >
                           {canView ? 'Revoke Access' : 'Grant Access'}
                         </button>
@@ -488,7 +519,7 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
       {/* TAB 4: Explore & Add Writers */}
       {activeTab === 'explore' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="font-serif-display text-lg font-bold text-[#24201C]">
                 Explore Community Writers
@@ -498,7 +529,7 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
               </p>
             </div>
 
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 text-[#8C7D6F] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -544,20 +575,22 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
 
                     {hasSentToMe ? (
                       <button
-                        onClick={() => { void acceptFriendRequest(writer.id).catch(() => undefined); }}
-                        className="px-3 py-1.5 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] rounded-lg hover:bg-[#403932]"
+                        onClick={() => runAction(`accept-${writer.id}`, () => acceptFriendRequest(writer.id))}
+                        disabled={isBusy(`accept-${writer.id}`)}
+                        className="px-3 py-1.5 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] rounded-lg hover:bg-[#403932] disabled:opacity-60"
                       >
-                        Accept Pending Request
+                        {isBusy(`accept-${writer.id}`) ? 'Accepting…' : 'Accept Pending Request'}
                       </button>
                     ) : isPending ? (
                       <span className="text-xs text-[#8A7969] font-medium">Request Sent</span>
                     ) : (
                       <button
-                        onClick={() => { void sendFriendRequest(writer.id).catch(() => undefined); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] rounded-lg transition-colors"
+                        onClick={() => runAction(`send-${writer.id}`, () => sendFriendRequest(writer.id))}
+                        disabled={isBusy(`send-${writer.id}`)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] rounded-lg transition-colors disabled:opacity-60"
                       >
                         <UserPlus className="w-3.5 h-3.5" />
-                        <span>Send Friend Request</span>
+                        <span>{isBusy(`send-${writer.id}`) ? 'Sending…' : 'Send Friend Request'}</span>
                       </button>
                     )}
                   </div>

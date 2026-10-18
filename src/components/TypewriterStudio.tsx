@@ -526,16 +526,17 @@ export const TypewriterStudio: React.FC<TypewriterStudioProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-[#8C7D6F]">
+              <div className="flex w-full sm:w-auto flex-wrap items-center justify-between sm:justify-end gap-2 text-[11px] text-[#8C7D6F]">
                 <span className="font-mono-type">{charCount} characters</span>
                 <button
                   type="button"
                   onClick={onOpenCustomize}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#DDD5C7] bg-[#FCFBF9] px-2.5 py-1.5 font-medium text-[#594C3F] hover:bg-[#EFE9DF] hover:text-[#24201C]"
+                  data-testid="button-customize-page"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, minHeight: 36, padding: '6px 12px', borderRadius: 8, border: '1px solid #2B2621', backgroundColor: '#2B2621', color: '#FAF8F5', fontWeight: 600, fontSize: 12, lineHeight: 1.2, whiteSpace: 'nowrap', cursor: 'pointer' }}
                   aria-label="Customize writing font, ink color, page, and layout"
                   title="Customize font, ink color, page style, and layout"
                 >
-                  <Settings2 className="h-3.5 w-3.5" />
+                  <Settings2 style={{ width: 14, height: 14 }} />
                   <span>Customize page</span>
                 </button>
               </div>
@@ -1032,6 +1033,37 @@ export const TypewriterStudio: React.FC<TypewriterStudioProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Always-reachable Customize button for phones (stays on screen while scrolling the long editor). */}
+      <button
+        type="button"
+        onClick={onOpenCustomize}
+        data-testid="button-customize-floating"
+        className="sm:hidden"
+        style={{
+          position: 'fixed',
+          right: 16,
+          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+          zIndex: 30,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          minHeight: 44,
+          padding: '10px 16px',
+          borderRadius: 999,
+          border: '1px solid #FAF8F5',
+          backgroundColor: '#2B2621',
+          color: '#FAF8F5',
+          fontSize: 13,
+          fontWeight: 600,
+          boxShadow: '0 6px 18px rgba(0,0,0,.28)',
+          cursor: 'pointer',
+        }}
+        aria-label="Customize writing font, ink color, page, and layout"
+      >
+        <Settings2 style={{ width: 16, height: 16 }} />
+        <span>Customize</span>
+      </button>
     </div>
   );
 };
