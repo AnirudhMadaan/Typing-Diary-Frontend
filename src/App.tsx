@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DiaryProvider, useDiary } from './context/DiaryContext';
 import { Navbar } from './components/Navbar';
 import { CommunityBlog } from './components/CommunityBlog';
@@ -84,13 +84,12 @@ function DiaryApp() {
 
       {/* Platform Announcement Banner */}
       {banner && !bannerDismissed && (
-        <div className={`border-b text-xs py-2 px-4 flex items-center justify-between gap-3 ${
-          banner.type === 'warning'
+        <div className={`border-b text-xs py-2 px-4 flex items-center justify-between gap-3 ${banner.type === 'warning'
             ? 'bg-[#FAF0E1] border-[#E8DEC8] text-[#8C5D23]'
             : banner.type === 'success'
-            ? 'bg-[#EAF5EC] border-[#BDE0C4] text-[#2F6136]'
-            : 'bg-[#FAF4EB] border-[#EAE4DC] text-[#4A3E33]'
-        }`}>
+              ? 'bg-[#EAF5EC] border-[#BDE0C4] text-[#2F6136]'
+              : 'bg-[#FAF4EB] border-[#EAE4DC] text-[#4A3E33]'
+          }`}>
           <div className="max-w-7xl mx-auto flex items-center gap-2 flex-1 justify-center font-medium">
             <Bell className="w-3.5 h-3.5 shrink-0" />
             <span>{banner.text}</span>
