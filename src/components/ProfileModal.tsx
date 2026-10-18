@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Check, Download, LogOut, UserRound, Volume2, X } from 'lucide-react';
+import { AlertTriangle, Check, Download, LogOut, UserRound, X } from 'lucide-react';
 import { useDiary } from '../context/DiaryContext';
 import { VisibilityType } from '../types/diary';
-import { typewriterAudio } from '../utils/audio';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -85,14 +84,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   const saveAccountPreferences = (key: 'allowFriendRequests' | 'defaultAnonymous' | 'showStatsByDefault', value: boolean) => {
     setSettings((current) => ({ ...current, [key]: value }));
-  };
-
-  const previewTypingSound = () => {
-    const previewType = settings.soundType === 'mute' ? 'typewriter' : settings.soundType;
-    const savedType = currentUser.settings.soundType === 'mute' ? 'typewriter' : currentUser.settings.soundType;
-    typewriterAudio.setSoundProfile(previewType);
-    typewriterAudio.playKeySound('a');
-    typewriterAudio.setSoundProfile(currentUser.settings.soundEnabled ? savedType : 'mute');
   };
 
   const confirmDeleteAccount = async () => {
@@ -182,41 +173,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 />
               </label>
             ))}
-          </fieldset>
-
-          <fieldset className="space-y-3 rounded-xl border border-[#E3DCCF] bg-[#FCFBF9] p-3">
-            <legend className="px-1 font-semibold text-[#4A3E33]">Typing key sounds</legend>
-            <label className="block text-[11px] font-semibold text-[#51463A]">
-              Sound style
-              <select
-                value={settings.soundType === 'mute' ? 'typewriter' : settings.soundType}
-                onChange={(event) => setSettings((current) => ({ ...current, soundType: event.target.value as typeof current.soundType }))}
-                className="mt-1 w-full rounded-lg border border-[#DDD5C7] bg-white px-3 py-2 text-xs font-normal focus:outline-none focus:border-[#8C765E]"
-              >
-                <option value="typewriter">Classic typewriter — metallic taps & bell</option>
-                <option value="mechanical">Mechanical keyboard — crisp clicks</option>
-                <option value="soft_click">Soft keys — gentle clicks</option>
-                <option value="bubble">Bubble pop — playful water drops</option>
-                <option value="retro_game">8-Bit retro — nostalgic arcade blips</option>
-                <option value="rain_tap">Raindrop tap — soothing rain on glass</option>
-                <option value="wood_block">Wood block — warm acoustic percussion</option>
-              </select>
-            </label>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <label className="inline-flex items-center gap-2 text-[11px] text-[#51463A]">
-                <input
-                  type="checkbox"
-                  checked={settings.soundEnabled}
-                  onChange={(event) => setSettings((current) => ({ ...current, soundEnabled: event.target.checked }))}
-                  className="h-4 w-4 accent-[#71634F]"
-                />
-                Play sounds while typing
-              </label>
-              <button type="button" onClick={previewTypingSound} className="inline-flex items-center gap-1.5 rounded-lg border border-[#DDD5C7] bg-white px-3 py-2 text-[11px] font-medium text-[#51463A] hover:bg-[#F3EEE6]">
-                <Volume2 className="h-3.5 w-3.5" /> Preview sound
-              </button>
-            </div>
-            <p className="text-[10px] leading-relaxed text-[#817366]">Space, Enter, and Backspace also use their own key sounds. Save your profile to keep these settings.</p>
           </fieldset>
 
           <section className="rounded-xl border border-[#E3DCCF] bg-[#FCFBF9] p-3">

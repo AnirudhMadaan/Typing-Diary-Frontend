@@ -1,12 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { useDiary } from '../context/DiaryContext';
-import { ArrowLeft, CheckCircle2, KeyRound, LogIn, Mail, RefreshCw, Sparkles, UserPlus } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LogIn, Mail, RefreshCw, Sparkles, UserPlus } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultMode?: 'login' | 'register' | 'google';
 }
+
+// Password field with a show / hide toggle.
+const PasswordInput: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  autoComplete: string;
+  minLength?: number;
+  className: string;
+}> = ({ value, onChange, autoComplete, minLength, className }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className="relative block">
+      <input
+        type={visible ? 'text' : 'password'}
+        autoComplete={autoComplete}
+        required
+        minLength={minLength}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${className} pr-10`}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((shown) => !shown)}
+        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-pressed={visible}
+        title={visible ? 'Hide password' : 'Show password'}
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-[#8A7969] hover:text-[#24201C]"
+      >
+        {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </span>
+  );
+};
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'google' }) => {
   const { login, register, sendVerificationCode, loginWithGoogle, error, clearError } = useDiary();
@@ -261,14 +295,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
             </label>
             <label className="block text-xs font-semibold text-[#4A3E33]">
               Password
-              <input
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="mt-1 w-full px-3 py-2.5 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]"
-              />
+              <PasswordInput autoComplete="current-password" value={password} onChange={setPassword} className="mt-1 w-full px-3 py-2.5 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]" />
             </label>
             <button disabled={busy} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] disabled:opacity-60 rounded-xl transition-colors">
               <LogIn className="w-4 h-4" />{busy ? 'Signing in…' : 'Sign in'}
@@ -320,19 +347,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="block text-xs font-semibold text-[#4A3E33]">
                 Password
-                <input
-                  type="password" autoComplete="new-password" required minLength={8}
-                  value={password} onChange={(event) => setPassword(event.target.value)}
-                  className="mt-1 w-full px-3 py-2 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]"
-                />
+                <PasswordInput autoComplete="new-password" minLength={8} value={password} onChange={setPassword} className="mt-1 w-full px-3 py-2 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]" />
               </label>
               <label className="block text-xs font-semibold text-[#4A3E33]">
                 Confirm password
-                <input
-                  type="password" autoComplete="new-password" required minLength={8}
-                  value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)}
-                  className="mt-1 w-full px-3 py-2 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]"
-                />
+                <PasswordInput autoComplete="new-password" minLength={8} value={confirmPassword} onChange={setConfirmPassword} className="mt-1 w-full px-3 py-2 bg-white border border-[#DDD6CB] rounded-lg text-[#24201C] font-normal focus:outline-none focus:border-[#8C765E]" />
               </label>
             </div>
             <button disabled={busy} className="w-full flex items-center justify-center gap-2 py-3 px-4 text-xs font-semibold text-[#FAF8F5] bg-[#2B2621] hover:bg-[#403932] disabled:opacity-60 rounded-xl transition-colors">

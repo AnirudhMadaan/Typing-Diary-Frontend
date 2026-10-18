@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, Moon, Palette, PenTool, Settings2, Sun, Volume2, VolumeX } from 'lucide-react';
 import { useDiary } from '../context/DiaryContext';
+import { typewriterAudio, SOUND_PROFILES, type SoundProfileType } from '../utils/audio';
 import {
   applyAppearance,
   appearancePalettes,
@@ -27,10 +28,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { currentUser, updateUserSettings, saveAppearance, logout } = useDiary();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
+  const [isSoundOpen, setIsSoundOpen] = useState(false);
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const appearanceRef = useRef<HTMLDivElement>(null);
+  const soundRef = useRef<HTMLDivElement>(null);
   const incomingRequestCount = currentUser.friendRequestsReceived.length;
   const navItems: { id: DiaryTab; label: string }[] = [
     { id: 'blog', label: 'Community Blog' },
@@ -42,16 +45,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Close the account menu / appearance panel when the user taps anywhere
   // outside of it (pointerdown also covers touch screens), or presses Escape.
   useEffect(() => {
-    if (!isMenuOpen && !isAppearanceOpen) return;
+    if (!isMenuOpen && !isAppearanceOpen && !isSoundOpen) return;
     const closeOnOutsidePress = (event: Event) => {
       const target = event.target as Node | null;
       if (isMenuOpen && menuRef.current && target && !menuRef.current.contains(target)) setIsMenuOpen(false);
       if (isAppearanceOpen && appearanceRef.current && target && !appearanceRef.current.contains(target)) setIsAppearanceOpen(false);
+      if (isSoundOpen && soundRef.current && target && !soundRef.current.contains(target)) setIsSoundOpen(false);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsMenuOpen(false);
         setIsAppearanceOpen(false);
+        setIsSoundOpen(false);
       }
     };
     document.addEventListener('pointerdown', closeOnOutsidePress);
@@ -62,12 +67,13 @@ export const Navbar: React.FC<NavbarProps> = ({
       document.removeEventListener('touchstart', closeOnOutsidePress);
       document.removeEventListener('keydown', closeOnEscape);
     };
-  }, [isMenuOpen, isAppearanceOpen]);
+  }, [isMenuOpen, isAppearanceOpen, isSoundOpen]);
 
   // Changing page also dismisses any open menu.
   useEffect(() => {
     setIsMenuOpen(false);
     setIsAppearanceOpen(false);
+    setIsSoundOpen(false);
   }, [activeTab]);
 
   useEffect(() => {
@@ -77,12 +83,17 @@ export const Navbar: React.FC<NavbarProps> = ({
     );
   }, [currentUser.settings.global, currentUser.settings.page]);
 
-  const toggleSound = () => {
-    const soundEnabled = !currentUser.settings.soundEnabled;
-    void updateUserSettings({
-      soundEnabled,
-      soundType: currentUser.settings.soundType === 'mute' ? 'typewriter' : currentUser.settings.soundType,
-    }).catch(() => undefined);
+  const activeSoundType: SoundProfileType = currentUser.settings.soundType === 'mute' ? 'typewriter' : currentUser.settings.soundType;
+
+  const setSoundEnabled = (soundEnabled: boolean) => {
+    void updateUserSettings({ soundEnabled, soundType: activeSoundType }).catch(() => undefined);
+  };
+
+  const chooseSoundStyle = (soundType: SoundProfileType) => {
+    // Play it straight away so the choice can be heard before the save finishes.
+    typewriterAudio.setSoundProfile(soundType);
+    typewriterAudio.playKeySound('a');
+    void updateUserSettings({ soundEnabled: true, soundType }).catch(() => undefined);
   };
 
   const saveGlobalAppearance = async (global: GlobalAppearance) => {
@@ -156,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-2 shrink-0">
           <div className="relative" ref={appearanceRef}>
             <button
-              onClick={() => { setIsMenuOpen(false); setIsAppearanceOpen((open) => !open); }}
+              onClick={() => { setIsMenuOpen(false); setIsSoundOpen(false); setIsAppearanceOpen((open) => !open); }}
               aria-expanded={isAppearanceOpen}
               aria-label="App appearance"
               data-testid="button-app-appearance"
@@ -230,18 +241,58 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          <button
-            onClick={toggleSound}
-            title={currentUser.settings.soundEnabled ? 'Mute typewriter sounds' : 'Enable typewriter sounds'}
-            aria-label="Toggle typewriter sounds"
-            className="p-2 text-[#736557] hover:text-[#24201C] hover:bg-[#EFEAE2] rounded-lg"
-          >
-            {currentUser.settings.soundEnabled ? <Volume2 className="w-4 h-4 text-[#8C765E]" /> : <VolumeX className="w-4 h-4 text-[#A89E92]" />}
-          </button>
+          <div className="relative" ref={soundRef}>
+            <button
+              type="button"
+              onClick={() => { setIsAppearanceOpen(false); setIsMenuOpen(false); setIsSoundOpen((open) => !open); }}
+              aria-expanded={isSoundOpen}
+              title="Typing sounds"
+              aria-label="Typing sound settings"
+              data-testid="button-sound-settings"
+              className="p-2 text-[#736557] hover:text-[#24201C] hover:bg-[#EFEAE2] rounded-lg"
+            >
+              {currentUser.settings.soundEnabled ? <Volume2 className="w-4 h-4 text-[#8C765E]" /> : <VolumeX className="w-4 h-4 text-[#A89E92]" />}
+            </button>
+            {isSoundOpen && (
+              <section className="absolute right-0 mt-2 w-[min(18rem,calc(100vw-1.5rem))] rounded-xl border border-[#E3DCCF] bg-[#FCFBF9] p-3 shadow-xl z-50" aria-label="Typing sound settings">
+                <label className="flex items-center justify-between gap-3 text-xs font-semibold text-[#24201C]">
+                  <span>Play sounds while typing</span>
+                  <input
+                    type="checkbox"
+                    checked={currentUser.settings.soundEnabled}
+                    onChange={(event) => setSoundEnabled(event.target.checked)}
+                    className="h-4 w-4 accent-[#71634F]"
+                  />
+                </label>
+                <p className="mt-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#817366]">Sound style</p>
+                <div className="space-y-1 max-h-64 overflow-y-auto">
+                  {SOUND_PROFILES.filter((profile) => profile.id !== 'mute').map((profile) => {
+                    const selected = activeSoundType === profile.id;
+                    return (
+                      <button
+                        key={profile.id}
+                        type="button"
+                        onClick={() => chooseSoundStyle(profile.id)}
+                        aria-pressed={selected}
+                        className={`w-full flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-[11px] ${selected ? 'border-[#8C765E] bg-[#EFE9DF]' : 'border-[#DDD5C7] bg-white hover:bg-[#F3EEE6]'}`}
+                      >
+                        <span>
+                          <span className="block font-semibold text-[#24201C]">{profile.label}</span>
+                          <span className="block text-[10px] text-[#817366]">{profile.desc}</span>
+                        </span>
+                        {selected && <Check className="w-3.5 h-3.5 text-[#73865c] shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[10px] text-[#948679]">Tap a style to hear it. Changes are saved automatically.</p>
+              </section>
+            )}
+          </div>
 
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => { setIsAppearanceOpen(false); setIsMenuOpen((open) => !open); }}
+              onClick={() => { setIsAppearanceOpen(false); setIsSoundOpen(false); setIsMenuOpen((open) => !open); }}
               className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 text-xs text-[#4F4439] bg-[#F2EDE4] hover:bg-[#E8E1D5] border border-[#DDD6CB] rounded-lg"
               aria-expanded={isMenuOpen}
             >
