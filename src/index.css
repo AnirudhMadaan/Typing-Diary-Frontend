@@ -521,3 +521,25 @@ button, [role="button"] { touch-action: manipulation; }
   .admin-panel [class*="p-6"] { padding: 1rem; }
   .admin-panel .overflow-x-auto { max-width: 100%; }
 }
+
+
+/* Keyboard-accessible skip navigation; stays out of sight until focused. */
+.skip-link {
+  position: fixed;
+  z-index: 9999;
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: translateY(-160%);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #24211D;
+  color: #fff;
+  font: 600 0.875rem/1.4 system-ui, sans-serif;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 18%);
+}
+.skip-link:focus { transform: translateY(0); outline: 3px solid #73865c; outline-offset: 3px; }
+
+/* Avoid off-screen sections increasing initial rendering work where supported. */
+@supports (content-visibility: auto) {
+  .community-post, [data-lighthouse-defer] { content-visibility: auto; contain-intrinsic-size: auto 560px; }
+}
