@@ -114,3 +114,6 @@ img, video, canvas, svg { max-width: 100%; }
   .bg-\[\#EFE9DF\].rounded-xl.overflow-x-auto,
   .mt-6.overflow-x-auto.pb-1 { overflow-x: auto; overflow-y: hidden; justify-content: flex-start; }
 }
+
+/* Blog filter tabs: reliable horizontal touch scrolling on narrow Android screens. */
+.blog-entry-filters{box-sizing:border-box;width:100%;max-width:100%;min-width:0;flex:0 1 auto;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scrollbar-width:thin;scroll-snap-type:x proximity}.blog-entry-filters>button{flex:0 0 auto;min-width:max-content;white-space:nowrap;scroll-snap-align:start}.blog-entry-filters>button:focus-visible{outline-offset:-2px}@media(max-width:640px){.blog-entry-filters{align-self:stretch;max-width:100%;padding-bottom:.4rem}}

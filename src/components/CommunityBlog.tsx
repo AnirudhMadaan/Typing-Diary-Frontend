@@ -184,7 +184,7 @@ export const CommunityBlog: React.FC<CommunityBlogProps> = ({ onSelectEntry, onO
         {/* Controls Toolbar: Functional tabs + Search + Mood */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#EAE4DC]">
           {/* Functional Segmented Filter Tabs (ALLOWED for interactive state selectors) */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#EFE9DF] rounded-xl self-start">
+          <div className="blog-entry-filters flex items-center gap-1.5 p-1 bg-[#EFE9DF] rounded-xl self-start">
             <button
               onClick={() => setActiveFilter('all')}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
