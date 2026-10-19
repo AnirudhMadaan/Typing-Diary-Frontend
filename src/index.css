@@ -352,3 +352,45 @@ body[data-diary-mode="dark"] ::-webkit-scrollbar-thumb:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: #C4BCB0;
 }
+
+/* Mobile-first overflow and touch-target safeguards (especially Android Chrome). */
+*, *::before, *::after { box-sizing: border-box; }
+html { width: 100%; min-width: 0; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+body { width: 100%; min-width: 0; margin: 0; overflow-x: clip; }
+#root { width: 100%; min-width: 0; min-height: 100vh; min-height: 100dvh; }
+img, video, canvas, svg { max-width: 100%; }
+input, select, textarea, button { font: inherit; }
+input, select, textarea { max-width: 100%; min-width: 0; }
+button, [role="button"] { touch-action: manipulation; }
+
+@media (max-width: 640px) {
+  /* Fixed overlays must scroll internally rather than extending beyond the viewport. */
+  [role="dialog"] {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1rem) !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1rem !important;
+  }
+  .fixed.inset-0.z-50 {
+    align-items: flex-start;
+    justify-content: center;
+    padding: .5rem !important;
+    padding-top: max(.5rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(.5rem, env(safe-area-inset-bottom)) !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  button, a, input, select, textarea { overflow-wrap: anywhere; }
+  button { min-height: 36px; }
+  /* Avoid wide admin controls, customize buttons, and navigation rows pushing the page sideways. */
+  .flex { min-width: 0; }
+  .flex > * { min-width: 0; }
+  .grid { min-width: 0; }
+  pre, code { max-width: 100%; overflow-wrap: anywhere; white-space: pre-wrap; }
+}
+
+@supports (padding: max(0px)) {
+  body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+}

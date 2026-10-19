@@ -37,11 +37,9 @@ export const AdminPanel: React.FC = () => {
     adminDeleteEntry,
     getSystemAnnouncement,
     setSystemAnnouncement,
-    getSiteStatus,
-    setMaintenanceMode,
   } = useDiary();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'email' | 'moderation' | 'announcement' | 'maintenance' | 'env'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'email' | 'moderation' | 'announcement' | 'env'>('overview');
   
   // Data states
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -69,9 +67,6 @@ export const AdminPanel: React.FC = () => {
   const [announcementType, setAnnouncementType] = useState<'info' | 'warning' | 'success'>('info');
   const [isAnnouncementActive, setIsAnnouncementActive] = useState(false);
   const [isSavingAnnouncement, setIsSavingAnnouncement] = useState(false);
-  const [maintenanceActive, setMaintenanceActive] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState('We are making a few improvements to Typing Diary. Please check back soon.');
-  const [isSavingMaintenance, setIsSavingMaintenance] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -85,9 +80,6 @@ export const AdminPanel: React.FC = () => {
       setOverview(overviewData);
       setAdminUsers(usersData);
       setPublicEntries(entriesData);
-      const siteStatus = await getSiteStatus();
-      setMaintenanceActive(Boolean(siteStatus.maintenance?.active));
-      if (siteStatus.maintenance?.message) setMaintenanceMessage(siteStatus.maintenance.message);
       if (announcementData) {
         setAnnouncementText(announcementData.text);
         setAnnouncementType((announcementData.type as any) || 'info');
@@ -307,9 +299,6 @@ export const AdminPanel: React.FC = () => {
             }`}
           >
             <Bell className="w-3.5 h-3.5" /> Site Banner
-          </button>
-          <button onClick={() => setActiveTab('maintenance')} className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-colors flex items-center gap-1.5 ${activeTab === 'maintenance' ? 'bg-[#2B2621] text-white' : 'text-[#6B5E52] hover:bg-[#F2EDE4]'}`}>
-            <Lock className="w-3.5 h-3.5" /> Maintenance Mode
           </button>
           <button
             onClick={() => setActiveTab('env')}
@@ -897,18 +886,6 @@ export const AdminPanel: React.FC = () => {
               {isSavingAnnouncement ? 'Saving…' : 'Save Banner Settings'}
             </button>
           </form>
-        </div>
-      )}
-
-      {activeTab === 'maintenance' && (
-        <div className="bg-white border border-[#E3DCCF] rounded-2xl p-6 shadow-xs max-w-2xl space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div><h2 className="font-serif-display text-lg font-bold text-[#24201C] flex items-center gap-2"><Lock className="w-5 h-5 text-[#8C765E]" /> Site Maintenance Mode</h2><p className="text-xs text-[#736558] mt-1">Visitors see a maintenance screen. Administrators can still use the site normally.</p></div>
-            <span className={`text-[10px] font-bold uppercase rounded-full px-3 py-1 ${maintenanceActive ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>{maintenanceActive ? 'Active' : 'Off'}</span>
-          </div>
-          <label className="flex items-center gap-2 text-xs font-semibold text-[#24201C]"><input type="checkbox" checked={maintenanceActive} onChange={e => setMaintenanceActive(e.target.checked)} className="w-4 h-4 accent-[#2B2621]" /> Enable maintenance screen for non-admin visitors</label>
-          <div><label className="block text-xs font-semibold text-[#4A3E33] mb-1">Message shown to visitors</label><textarea rows={3} maxLength={500} value={maintenanceMessage} onChange={e => setMaintenanceMessage(e.target.value)} className="w-full p-3 bg-[#FCFBF9] border border-[#DDD5C7] rounded-xl text-xs text-[#24201C] focus:outline-none focus:border-[#8C765E]" /></div>
-          <button disabled={isSavingMaintenance} onClick={async () => { setIsSavingMaintenance(true); setStatusMessage(null); try { await setMaintenanceMode(maintenanceActive, maintenanceMessage); setStatusMessage({type:'success', text: maintenanceActive ? 'Maintenance mode enabled for non-admin visitors.' : 'Maintenance mode disabled.'}); } catch (err:any) { setStatusMessage({type:'error', text:err?.message || 'Failed to update maintenance mode.'}); } finally { setIsSavingMaintenance(false); } }} className="px-5 py-2.5 bg-[#2B2621] hover:bg-[#403932] disabled:opacity-50 text-white text-xs font-semibold rounded-xl">{isSavingMaintenance ? 'Saving…' : 'Save Maintenance Settings'}</button>
         </div>
       )}
 

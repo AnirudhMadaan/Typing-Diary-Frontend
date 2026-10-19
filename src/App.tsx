@@ -21,7 +21,7 @@ import { DiaryEntry, VisibilityType } from './types/diary';
 import { X, Bell, ShieldCheck } from 'lucide-react';
 
 function DiaryApp() {
-  const { currentUser, isAuthenticated, isLoading, error, clearError, getSiteStatus } = useDiary();
+  const { currentUser, isAuthenticated, isLoading, error, clearError, getSystemAnnouncement } = useDiary();
   const [activeTab, setActiveTab] = useState<DiaryTab>('blog');
   const [selectedEntry, setSelectedEntry] = useState<DiaryEntry | null>(null);
   const [studioInitialVisibility, setStudioInitialVisibility] = useState<VisibilityType>('public');
@@ -33,12 +33,10 @@ function DiaryApp() {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [banner, setBanner] = useState<{ text: string; type: string } | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [maintenance, setMaintenance] = useState<{ active: boolean; message: string } | null>(null);
-  const [siteStatusLoaded, setSiteStatusLoaded] = useState(false);
 
   useEffect(() => {
-    getSiteStatus().then((status) => { setBanner(status.announcement); setMaintenance(status.maintenance); }).catch(() => undefined).finally(() => setSiteStatusLoaded(true));
-  }, [getSiteStatus]);
+    getSystemAnnouncement().then(setBanner).catch(() => undefined);
+  }, [getSystemAnnouncement]);
 
   const handleOpenNewEntry = (preset?: 'public' | 'anonymous') => {
     if (preset === 'anonymous') {
@@ -60,20 +58,6 @@ function DiaryApp() {
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#FAF8F5] text-[#736558] font-serif-display">Opening your diary…</div>;
-  }
-
-  if (siteStatusLoaded && maintenance?.active && !currentUser.isAdmin) {
-    return (
-      <div className="min-h-screen bg-[#FAF8F5] text-[#24201C] flex items-center justify-center p-6">
-        <div className="max-w-xl w-full text-center bg-white border border-[#E3DCCF] rounded-3xl p-8 sm:p-12 shadow-sm">
-          <div className="mx-auto mb-6 w-16 h-16 rounded-2xl bg-[#F5EBDD] flex items-center justify-center text-[#8C5D23]"><ShieldCheck className="w-8 h-8" /></div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[#8C765E] font-semibold mb-3">Typing Diary</p>
-          <h1 className="font-serif-display text-3xl sm:text-4xl font-bold mb-4">We’ll be back soon</h1>
-          <p className="text-sm text-[#736558] leading-7">{maintenance.message || 'We are making a few improvements to Typing Diary. Please check back soon.'}</p>
-          <div className="mt-8 inline-flex items-center gap-2 text-xs text-[#8C765E]"><span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Scheduled maintenance in progress</div>
-        </div>
-      </div>
-    );
   }
 
   if (!isAuthenticated) {

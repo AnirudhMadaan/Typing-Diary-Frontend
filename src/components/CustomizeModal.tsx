@@ -35,6 +35,7 @@ const palettes: Record<string, {
   sunset: { label: 'Sunset', color: '#bd7958', background: '#FAF4EF', surface: '#FFFAF5', ink: '#35291F', muted: '#806B5C', border: '#EADBCB', primary: '#493428' },
 };
 const icons = ['✦', '✎', '♡', '☼', '☾', '❋', '◌'];
+const fontFamilies: Record<string, string> = { dm: '"DM Sans", sans-serif', lora: '"Lora", Georgia, serif', fraunces: '"Fraunces", Georgia, serif', caveat: '"Caveat", cursive', patrick: '"Patrick Hand", cursive', kalam: '"Kalam", cursive', mono: '"Space Mono", monospace' };
 
 function applyAppearance(page: PageStyle, global: GlobalStyle) {
   const root = document.documentElement;
@@ -161,7 +162,8 @@ export const CustomizeModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {fonts.map(([key, label, mood]) => (
                 <button key={key} onClick={() => updatePage({ font: key })} className={`p-2.5 border rounded-lg text-left ${page.font === key ? 'border-[#2B2621] bg-[#EFE9DF]' : 'border-[#DDD5C7] bg-[#FCFBF9] hover:bg-[#F3EEE6]'}`}>
-                  <span className="block text-xs font-semibold text-[#2B2621]">{label}</span>
+                  <span className="block text-sm font-semibold text-[#2B2621] break-words" style={{ fontFamily: fontFamilies[key] }}>{label}</span>
+                  <span className="block text-[10px] text-[#827467]" style={{ fontFamily: fontFamilies[key] }}>The quick brown fox</span>
                   <span className="block text-[10px] text-[#827467]">{mood}</span>
                 </button>
               ))}

@@ -221,7 +221,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, defaultMode = 'goo
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <section className="bg-[#FAF8F5] border border-[#E3DCCF] rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-6">
+      <section className="bg-[#FAF8F5] border border-[#E3DCCF] rounded-2xl max-w-lg w-full min-w-0 p-4 sm:p-8 shadow-2xl space-y-5 sm:space-y-6 max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain">
         <header>
           <div className="flex items-center gap-1.5 text-xs font-mono-type uppercase tracking-wider text-[#8A7969]">
             <Sparkles className="w-3.5 h-3.5" />

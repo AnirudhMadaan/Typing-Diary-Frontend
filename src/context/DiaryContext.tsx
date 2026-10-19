@@ -89,8 +89,6 @@ interface DiaryContextType {
   adminDeleteEntry: (entryId: string) => Promise<void>;
   getSystemAnnouncement: () => Promise<{ text: string; type: string } | null>;
   setSystemAnnouncement: (text: string, type?: string, active?: boolean) => Promise<void>;
-  getSiteStatus: () => Promise<{ announcement: { text: string; type: string } | null; maintenance: { active: boolean; message: string } | null }>;
-  setMaintenanceMode: (active: boolean, message?: string) => Promise<void>;
 }
 
 const DiaryContext = createContext<DiaryContextType | undefined>(undefined);
@@ -485,11 +483,10 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setSystemAnnouncement = useCallback(async (text: string, type = 'info', active = true) => {
-    await api('/api/admin/announcement', { method: 'POST', body: JSON.stringify({ text, type, active }) });
-  }, []);
-  const getSiteStatus = useCallback(async () => api<{ announcement: { text: string; type: string } | null; maintenance: { active: boolean; message: string } | null }>('/api/announcement'), []);
-  const setMaintenanceMode = useCallback(async (active: boolean, message = 'Scheduled maintenance is in progress. Please check back soon.') => {
-    await api('/api/admin/maintenance', { method: 'POST', body: JSON.stringify({ active, message }) });
+    await api('/api/admin/announcement', {
+      method: 'POST',
+      body: JSON.stringify({ text, type, active }),
+    });
   }, []);
 
   const value = useMemo<DiaryContextType>(() => ({
@@ -531,14 +528,12 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     adminDeleteEntry,
     getSystemAnnouncement,
     setSystemAnnouncement,
-    getSiteStatus,
-    setMaintenanceMode,
   }), [
     displayedUser, currentUser, isLoading, users, entries, error, refresh, login, sendVerificationCode, register, loginWithGoogle, logout,
     updateUserProfile, updateUserSettings, saveAppearance, setPaperTheme, createEntry, updateEntry, deleteEntry, toggleReaction, addComment,
     sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend, toggleFriendDiaryAccess, searchUsers,
     canUserViewEntry, exportDiary, deleteAccount,
-    getAdminOverview, getAdminUsers, sendBroadcastEmail, getAdminPublicEntries, adminDeleteEntry, getSystemAnnouncement, setSystemAnnouncement, getSiteStatus, setMaintenanceMode,
+    getAdminOverview, getAdminUsers, sendBroadcastEmail, getAdminPublicEntries, adminDeleteEntry, getSystemAnnouncement, setSystemAnnouncement,
   ]);
 
   return <DiaryContext.Provider value={value}>{children}</DiaryContext.Provider>;
