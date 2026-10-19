@@ -134,7 +134,6 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [error, setError] = useState('');
   const currentUserRef = useRef<User | null>(null);
   currentUserRef.current = currentUser;
-  const reactionRequestIds = useRef<Record<string, number>>({});
   // Normalize the user so older/malformed API records cannot crash the UI.
   // Memoised: a new object on every render made every consumer re-render.
   const displayedUser = useMemo(() => asUser(currentUser || emptyUser), [currentUser]);
@@ -363,39 +362,13 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setEntries((previous) => previous.filter((entry) => entry.id !== entryId));
   }), [withError]);
 
-  // Update reactions optimistically so the UI responds on the same frame as the tap.
-  // The server remains authoritative; failed requests restore the previous entry.
-  const toggleReaction = useCallback(async (entryId: string, type: string) => {
-    const supported = ['resonance', 'hug', 'bookmark', 'inspire'];
-    if (!supported.includes(type)) return;
-    const requestKey = `${entryId}:${type}`;
-    const requestId = (reactionRequestIds.current[requestKey] || 0) + 1;
-    reactionRequestIds.current[requestKey] = requestId;
-    const previousEntry = entries.find((entry) => entry.id === entryId);
-    setEntries((previous) => previous.map((entry) => {
-      if (entry.id !== entryId) return entry;
-      const userReactions = entry.userReactions || [];
-      const wasReacted = userReactions.includes(type);
-      return {
-        ...entry,
-        reactions: { ...entry.reactions, [type]: Math.max(0, (entry.reactions?.[type as keyof DiaryEntry['reactions']] || 0) + (wasReacted ? -1 : 1)) },
-        userReactions: wasReacted ? userReactions.filter((reaction) => reaction !== type) : [...userReactions, type],
-      };
-    }));
-    try {
-      const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/reactions`, {
-        method: 'POST',
-        body: JSON.stringify({ type }),
-      });
-      if (reactionRequestIds.current[requestKey] === requestId) applyEntry(result.entry);
-    } catch (reason) {
-      if (reactionRequestIds.current[requestKey] === requestId && previousEntry) {
-        setEntries((previous) => previous.map((entry) => entry.id === entryId ? previousEntry! : entry));
-      }
-      setError((reason as any)?.message || 'That reaction could not be saved. Please try again.');
-      throw reason;
-    }
-  }, [applyEntry, entries]);
+  const toggleReaction = useCallback((entryId: string, type: string) => withError(async () => {
+    const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ type }),
+    });
+    applyEntry(result.entry);
+  }), [applyEntry, withError]);
 
   const addComment = useCallback((entryId: string, text: string, isAnonymous = false) => withError(async () => {
     const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/comments`, {
