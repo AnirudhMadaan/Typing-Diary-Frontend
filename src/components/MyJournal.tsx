@@ -323,7 +323,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onSelectEntry, onOpenTypew
             return (
               <div
                 key={entry.id}
-                className="bg-[#FCFBF9] border border-[#E3DCcf] rounded-2xl p-6 shadow-xs hover:border-[#D0C6B8] transition-all space-y-4"
+                className="bg-[#FCFBF9] border border-[#E3DCcf] rounded-2xl p-6 shadow-xs hover:border-[#D0C6B8] transition-[border-color,background-color] duration-150 space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="space-y-1 max-w-2xl">

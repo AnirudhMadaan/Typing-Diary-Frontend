@@ -394,3 +394,100 @@ button, [role="button"] { touch-action: manipulation; }
 @supports (padding: max(0px)) {
   body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 }
+
+
+/* Interaction performance: limit expensive repainting and respect reduced motion. */
+.community-entry-card, article {
+  contain: layout style;
+}
+@media (max-width: 640px) {
+  /* Blur filters are costly on lower-end Android GPUs; keep overlays visually clear without them. */
+  .backdrop-blur-xs, .backdrop-blur-sm, .backdrop-blur, .backdrop-blur-md {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Global visual polish: one readable UI type system, restrained motion, and
+   consistent interactive states. The diary paper's user-selected font stays independent. */
+@layer base {
+  html { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: -0.012em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 550;
+    letter-spacing: -0.035em;
+    line-height: 1.16;
+    text-wrap: balance;
+  }
+  p, label, input, textarea, select, button { letter-spacing: inherit; }
+  input, textarea, select { line-height: 1.45; }
+  ::selection { background: #E6DCCB; color: #28231E; }
+}
+
+/* Small, purposeful movement instead of broad transitions that make the UI feel sluggish. */
+:where(button, a, [role="button"], input, select, textarea) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(button, a, [role="button"]) {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease,
+    box-shadow 150ms ease, opacity 150ms ease, transform 150ms ease;
+}
+:where(button, a, [role="button"]):active { transform: scale(.985); }
+:where(button, a, [role="button"]):focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--diary-accent, #8B9672) 72%, white);
+  outline-offset: 2px;
+}
+:where(input, textarea, select) {
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+:where(input, textarea, select):focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--diary-accent, #8B9672) 16%, transparent);
+}
+
+/* Gentle card depth; no perpetual animation and no large blur effects. */
+:where(article, .community-entry-card, [data-ui-card="true"]) {
+  border-radius: 16px;
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(article, .community-entry-card, [data-ui-card="true"]):hover {
+    border-color: color-mix(in srgb, var(--diary-accent, #8B9672) 30%, #E7E0D6);
+  }
+  :where(button, a, [role="button"]):hover { transition-duration: 120ms; }
+}
+
+/* Keep the site shell crisp while the journal canvas remains deliberately tactile. */
+#root { isolation: isolate; }
+body > #root { animation: diary-ui-enter 220ms ease-out both; }
+@keyframes diary-ui-enter {
+  from { opacity: .92; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+  h1 { letter-spacing: -.03em; }
+  :where(button, a, [role="button"]) { min-height: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body > #root { animation: none !important; }
+  :where(button, a, [role="button"]) { transition: none !important; }
+  :where(button, a, [role="button"]):active { transform: none; }
+}

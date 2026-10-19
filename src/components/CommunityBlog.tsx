@@ -285,7 +285,7 @@ export const CommunityBlog: React.FC<CommunityBlogProps> = ({ onSelectEntry, onO
             return (
               <article
                 key={entry.id}
-                className="group relative bg-[#FCFBF9] border border-[#E4DDD2] hover:border-[#CFC4B5] rounded-2xl p-6 transition-all shadow-xs flex flex-col justify-between"
+                className="group relative bg-[#FCFBF9] border border-[#E4DDD2] hover:border-[#CFC4B5] rounded-2xl p-6 transition-[border-color,background-color,transform] duration-150 shadow-xs flex flex-col justify-between"
               >
                 <div>
                   {/* Top Bar on Card: Author Information + Privacy Status */}

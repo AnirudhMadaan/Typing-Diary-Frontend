@@ -89,6 +89,8 @@ interface DiaryContextType {
   adminDeleteEntry: (entryId: string) => Promise<void>;
   getSystemAnnouncement: () => Promise<{ text: string; type: string } | null>;
   setSystemAnnouncement: (text: string, type?: string, active?: boolean) => Promise<void>;
+  getSiteStatus: () => Promise<{ announcement: { text: string; type: string } | null; maintenance: { active: boolean; message: string } | null }>;
+  setMaintenanceMode: (active: boolean, message?: string) => Promise<void>;
 }
 
 const DiaryContext = createContext<DiaryContextType | undefined>(undefined);
@@ -132,6 +134,7 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [error, setError] = useState('');
   const currentUserRef = useRef<User | null>(null);
   currentUserRef.current = currentUser;
+  const reactionRequestIds = useRef<Record<string, number>>({});
   // Normalize the user so older/malformed API records cannot crash the UI.
   // Memoised: a new object on every render made every consumer re-render.
   const displayedUser = useMemo(() => asUser(currentUser || emptyUser), [currentUser]);
@@ -360,13 +363,39 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setEntries((previous) => previous.filter((entry) => entry.id !== entryId));
   }), [withError]);
 
-  const toggleReaction = useCallback((entryId: string, type: string) => withError(async () => {
-    const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/reactions`, {
-      method: 'POST',
-      body: JSON.stringify({ type }),
-    });
-    applyEntry(result.entry);
-  }), [applyEntry, withError]);
+  // Update reactions optimistically so the UI responds on the same frame as the tap.
+  // The server remains authoritative; failed requests restore the previous entry.
+  const toggleReaction = useCallback(async (entryId: string, type: string) => {
+    const supported = ['resonance', 'hug', 'bookmark', 'inspire'];
+    if (!supported.includes(type)) return;
+    const requestKey = `${entryId}:${type}`;
+    const requestId = (reactionRequestIds.current[requestKey] || 0) + 1;
+    reactionRequestIds.current[requestKey] = requestId;
+    const previousEntry = entries.find((entry) => entry.id === entryId);
+    setEntries((previous) => previous.map((entry) => {
+      if (entry.id !== entryId) return entry;
+      const userReactions = entry.userReactions || [];
+      const wasReacted = userReactions.includes(type);
+      return {
+        ...entry,
+        reactions: { ...entry.reactions, [type]: Math.max(0, (entry.reactions?.[type as keyof DiaryEntry['reactions']] || 0) + (wasReacted ? -1 : 1)) },
+        userReactions: wasReacted ? userReactions.filter((reaction) => reaction !== type) : [...userReactions, type],
+      };
+    }));
+    try {
+      const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/reactions`, {
+        method: 'POST',
+        body: JSON.stringify({ type }),
+      });
+      if (reactionRequestIds.current[requestKey] === requestId) applyEntry(result.entry);
+    } catch (reason) {
+      if (reactionRequestIds.current[requestKey] === requestId && previousEntry) {
+        setEntries((previous) => previous.map((entry) => entry.id === entryId ? previousEntry! : entry));
+      }
+      setError((reason as any)?.message || 'That reaction could not be saved. Please try again.');
+      throw reason;
+    }
+  }, [applyEntry, entries]);
 
   const addComment = useCallback((entryId: string, text: string, isAnonymous = false) => withError(async () => {
     const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/comments`, {
@@ -483,10 +512,11 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const setSystemAnnouncement = useCallback(async (text: string, type = 'info', active = true) => {
-    await api('/api/admin/announcement', {
-      method: 'POST',
-      body: JSON.stringify({ text, type, active }),
-    });
+    await api('/api/admin/announcement', { method: 'POST', body: JSON.stringify({ text, type, active }) });
+  }, []);
+  const getSiteStatus = useCallback(async () => api<{ announcement: { text: string; type: string } | null; maintenance: { active: boolean; message: string } | null }>('/api/announcement'), []);
+  const setMaintenanceMode = useCallback(async (active: boolean, message = 'Scheduled maintenance is in progress. Please check back soon.') => {
+    await api('/api/admin/maintenance', { method: 'POST', body: JSON.stringify({ active, message }) });
   }, []);
 
   const value = useMemo<DiaryContextType>(() => ({
@@ -528,12 +558,14 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     adminDeleteEntry,
     getSystemAnnouncement,
     setSystemAnnouncement,
+    getSiteStatus,
+    setMaintenanceMode,
   }), [
     displayedUser, currentUser, isLoading, users, entries, error, refresh, login, sendVerificationCode, register, loginWithGoogle, logout,
     updateUserProfile, updateUserSettings, saveAppearance, setPaperTheme, createEntry, updateEntry, deleteEntry, toggleReaction, addComment,
     sendFriendRequest, acceptFriendRequest, declineFriendRequest, removeFriend, toggleFriendDiaryAccess, searchUsers,
     canUserViewEntry, exportDiary, deleteAccount,
-    getAdminOverview, getAdminUsers, sendBroadcastEmail, getAdminPublicEntries, adminDeleteEntry, getSystemAnnouncement, setSystemAnnouncement,
+    getAdminOverview, getAdminUsers, sendBroadcastEmail, getAdminPublicEntries, adminDeleteEntry, getSystemAnnouncement, setSystemAnnouncement, getSiteStatus, setMaintenanceMode,
   ]);
 
   return <DiaryContext.Provider value={value}>{children}</DiaryContext.Provider>;
