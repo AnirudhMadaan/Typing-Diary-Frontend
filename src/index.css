@@ -543,3 +543,101 @@ button, [role="button"] { touch-action: manipulation; }
 @supports (content-visibility: auto) {
   .community-post, [data-lighthouse-defer] { content-visibility: auto; contain-intrinsic-size: auto 560px; }
 }
+
+
+/* Final viewport and Lighthouse refinements — layout-only; all controls/features remain. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { min-width: 320px; overflow-x: clip; }
+#root { min-width: 0; width: 100%; }
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #647b50;
+  outline-offset: 2px;
+}
+button, input, select, textarea { font: inherit; }
+img, video, canvas, svg { max-width: 100%; }
+@media (max-width: 640px) {
+  /* Keep the utility panels inside the physical Android viewport even when
+     the browser uses a dynamic address/navigation bar. */
+  header.sticky > div:first-child {
+    gap: .35rem;
+    padding-left: max(.5rem, env(safe-area-inset-left));
+    padding-right: max(.5rem, env(safe-area-inset-right));
+  }
+  header.sticky > div:first-child > button:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: .4rem;
+  }
+  header.sticky > div:first-child > button:first-child > span:last-child { min-width: 0; }
+  header.sticky > div:first-child > button:first-child .font-serif-display {
+    font-size: clamp(.9rem, 4vw, 1.1rem);
+    white-space: nowrap;
+  }
+  header.sticky > div:first-child > div:last-child {
+    flex: 0 0 auto;
+    gap: .15rem;
+  }
+  header.sticky > div:first-child > div:last-child > button,
+  header.sticky > div:first-child > div:last-child > div > button {
+    min-width: 36px;
+    min-height: 40px;
+    padding-left: .4rem;
+    padding-right: .4rem;
+  }
+  header.sticky > div:first-child > div:last-child > div > section {
+    position: fixed !important;
+    z-index: 100;
+    top: calc(env(safe-area-inset-top) + 4.25rem);
+    right: max(.5rem, env(safe-area-inset-right));
+    left: max(.5rem, env(safe-area-inset-left));
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  header.sticky > div:first-child > div:last-child > div > div.absolute {
+    position: fixed !important;
+    z-index: 100;
+    top: calc(env(safe-area-inset-top) + 4.25rem);
+    right: max(.5rem, env(safe-area-inset-right));
+    left: max(.5rem, env(safe-area-inset-left));
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  header.sticky > nav {
+    justify-content: flex-start;
+    gap: .2rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: max(.5rem, env(safe-area-inset-bottom, 0px));
+  }
+  header.sticky > nav::-webkit-scrollbar { display: none; }
+  header.sticky > nav button {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: .5rem .65rem;
+    white-space: nowrap;
+  }
+  .customize-dialog { overscroll-behavior: contain; }
+  .customize-dialog input[type="range"] { min-height: 32px; }
+  .customize-dialog button, .customize-dialog label { overflow-wrap: anywhere; }
+  footer > div:last-child > div:last-child {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
