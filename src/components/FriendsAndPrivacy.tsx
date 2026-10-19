@@ -116,10 +116,10 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
         </div>
 
         {/* Tab selection */}
-        <div className="flex items-center gap-2 mt-6 overflow-x-auto pb-1">
+        <div className="mobile-tab-strip flex flex-nowrap items-center gap-2 mt-6 overflow-x-auto pb-1 min-w-0 max-w-full">
           <button
             onClick={() => setActiveTab('my-friends')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
               activeTab === 'my-friends'
                 ? 'bg-[#2B2621] text-[#FAF8F5]'
                 : 'bg-[#EFE9DF] text-[#63574B] hover:text-[#24201C]'
@@ -130,7 +130,7 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
 
           <button
             onClick={() => setActiveTab('requests')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'requests'
                 ? 'bg-[#2B2621] text-[#FAF8F5]'
                 : 'bg-[#EFE9DF] text-[#63574B] hover:text-[#24201C]'
@@ -146,7 +146,7 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
 
           <button
             onClick={() => setActiveTab('privacy-matrix')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
               activeTab === 'privacy-matrix'
                 ? 'bg-[#2B2621] text-[#FAF8F5]'
                 : 'bg-[#EFE9DF] text-[#63574B] hover:text-[#24201C]'
@@ -157,7 +157,7 @@ export const FriendsAndPrivacy: React.FC<FriendsAndPrivacyProps> = ({ onSelectEn
 
           <button
             onClick={() => setActiveTab('explore')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
               activeTab === 'explore'
                 ? 'bg-[#2B2621] text-[#FAF8F5]'
                 : 'bg-[#EFE9DF] text-[#63574B] hover:text-[#24201C]'

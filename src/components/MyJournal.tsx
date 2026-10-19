@@ -158,10 +158,10 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onSelectEntry, onOpenTypew
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Segmented Filter */}
-        <div className="flex items-center gap-1 bg-[#EFE9DF] p-1 rounded-xl overflow-x-auto">
+        <div className="mobile-tab-strip flex flex-nowrap items-center gap-1 bg-[#EFE9DF] p-1 rounded-xl overflow-x-auto min-w-0 max-w-full">
           <button
             onClick={() => setFilterVisibility('all')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
               filterVisibility === 'all'
                 ? 'bg-[#FAF8F5] text-[#24201C] shadow-xs'
                 : 'text-[#695C4F] hover:text-[#24201C]'

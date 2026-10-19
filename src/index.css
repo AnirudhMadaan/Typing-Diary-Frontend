@@ -641,3 +641,25 @@ img, video, canvas, svg { max-width: 100%; }
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Android: keep Friends and Journal segmented tabs inside their own rounded bars. */
+.mobile-tab-strip {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.mobile-tab-strip::-webkit-scrollbar { display: none; }
+.mobile-tab-strip > button { flex: 0 0 auto; max-width: none; }
+@media (max-width: 640px) {
+  .mobile-tab-strip {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: .75rem;
+  }
+  .mobile-tab-strip > button { white-space: nowrap; }
+}
