@@ -140,8 +140,8 @@ export const CustomizeModal: React.FC<{ isOpen: boolean; onClose: () => void }> 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/55 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="customize-modal-title" className="bg-[#FAF8F5] border border-[#E3DCCF] rounded-2xl max-w-2xl w-full p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto space-y-6">
+    <div className="customize-overlay fixed inset-0 z-50 bg-black/55 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="customize-modal-title" className="customize-dialog bg-[#FAF8F5] border border-[#E3DCCF] rounded-2xl max-w-2xl w-full min-w-0 p-5 sm:p-7 shadow-2xl max-h-[92vh] overflow-y-auto space-y-6">
         <header className="flex items-start justify-between border-b border-[#EAE4DC] pb-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono-type uppercase tracking-wider text-[#8A7969]">

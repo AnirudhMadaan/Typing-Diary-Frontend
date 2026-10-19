@@ -482,3 +482,42 @@ button, [role="button"] { touch-action: manipulation; }
   .community-page .community-post { transition: border-color 180ms ease, box-shadow 180ms ease; }
   .community-page .community-post:hover { transform: none; }
 }
+
+/* Android/mobile layout corrections: keep settings, sound selectors and admin
+   controls inside the viewport while preserving the existing motion design. */
+.customize-overlay { box-sizing: border-box; overscroll-behavior: contain; }
+.customize-dialog { min-width: 0; width: min(100%, 42rem); overflow-wrap: anywhere; }
+.customize-dialog > * { min-width: 0; }
+.customize-dialog header { gap: .75rem; }
+.customize-dialog header > div { min-width: 0; }
+.customize-dialog h2 { overflow-wrap: anywhere; }
+.typing-controls { min-width: 0; width: 100%; }
+.typing-controls > div,
+.typing-controls > div > div { min-width: 0; max-width: 100%; }
+.admin-panel { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.admin-panel > * { min-width: 0; }
+.admin-panel .admin-tabs { max-width: 100%; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.admin-panel .admin-tabs button { flex: 0 0 auto; }
+.admin-panel input, .admin-panel select, .admin-panel textarea { min-width: 0; max-width: 100%; }
+.admin-panel pre { max-width: 100%; overflow-x: auto; }
+@media (max-width: 640px) {
+  .customize-overlay { align-items: flex-start; padding: max(.5rem, env(safe-area-inset-top)) .5rem max(.5rem, env(safe-area-inset-bottom)) !important; }
+  .customize-dialog,
+  [role="dialog"].customize-dialog { width: 100%; max-width: 100% !important; max-height: calc(100dvh - max(1rem, env(safe-area-inset-top) + env(safe-area-inset-bottom))) !important; padding: .9rem !important; border-radius: 1rem; }
+  .customize-dialog header { align-items: flex-start; }
+  .customize-dialog header h2 { font-size: 1.2rem; line-height: 1.35; }
+  .customize-dialog .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .typing-controls > div:first-child { align-items: stretch; }
+  .typing-controls > div:first-child > div:first-child { width: 100%; align-items: flex-start; flex-direction: column; }
+  .typing-controls > div:first-child > div:first-child > div { width: 100%; max-width: 100%; display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .typing-controls > div:first-child > div:first-child > div button { flex: 0 0 auto; white-space: nowrap; }
+  .typing-controls > div:nth-child(2) { align-items: flex-start; flex-direction: column; }
+  .typing-controls > div:nth-child(2) > div { width: 100%; display: flex; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .typing-controls > div:nth-child(2) > div button { flex: 0 0 auto; white-space: nowrap; }
+  .admin-panel { padding-left: .75rem; padding-right: .75rem; padding-top: 1rem; padding-bottom: 1.5rem; gap: 1rem; }
+  .admin-panel > header { padding: 1rem; border-radius: 1rem; }
+  .admin-panel .admin-tabs { margin-left: -.1rem; margin-right: -.1rem; gap: .45rem; }
+  .admin-panel .admin-tabs button { min-height: 40px; padding: .55rem .7rem; font-size: 11px; }
+  .admin-panel [class*="p-6"] { padding: 1rem; }
+  .admin-panel .overflow-x-auto { max-width: 100%; }
+}

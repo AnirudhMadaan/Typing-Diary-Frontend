@@ -502,7 +502,7 @@ export const TypewriterStudio: React.FC<TypewriterStudioProps> = ({
         {/* Main Writing Canvas (8 cols) */}
         <div className="lg:col-span-8 space-y-4">
           {/* Paper theme and Typing key sound effect selector bar */}
-          <div className="space-y-2.5">
+          <div className="typing-controls space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#6E6154]">
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="font-medium">Paper Texture:</span>
