@@ -85,7 +85,7 @@ export const CommunityBlog: React.FC<CommunityBlogProps> = ({ onSelectEntry, onO
   const totalFriendsPosts = entries.filter((e) => (e.visibility === 'friends' || e.visibility === 'custom_friends') && canUserViewEntry(e, currentUser.id)).length;
 
   return (
-    <div className="space-y-12 pb-16">
+    <div className="community-page space-y-10 pb-16">
       {/* Editorial Hero Split */}
       <section className="bg-[#FAF8F5] border-b border-[#EAE4DC] pt-8 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,15 +94,15 @@ export const CommunityBlog: React.FC<CommunityBlogProps> = ({ onSelectEntry, onO
             <div className="lg:col-span-7 flex flex-col justify-between py-2">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-xs font-mono-type uppercase tracking-wider text-[#8A7969]">
-                  <span>Diary Commons</span>
+                  <span>A COMMUNITY OF WORDS</span>
                   <span aria-hidden="true">·</span>
-                  <span>Tactile Typewriter Feed</span>
+                  <span>REAL PEOPLE, REAL THOUGHTS</span>
                   <span aria-hidden="true">·</span>
-                  <span>Granular Privacy Control</span>
+                  <span>YOUR SPACE, YOUR CHOICE</span>
                 </div>
 
                 <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#24201C] leading-[1.15] text-balance">
-                  Unfiltered reflections from minds typing in the quiet.
+                  A little space for what’s on your mind.
                 </h1>
 
                 <p className="text-base text-[#574C40] leading-relaxed max-w-2xl">
@@ -277,7 +277,7 @@ export const CommunityBlog: React.FC<CommunityBlogProps> = ({ onSelectEntry, onO
         )}
 
         {/* Editorial Feed Grid: 2 columns on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="community-feed grid grid-cols-1 lg:grid-cols-2 gap-6">
           {visibleEntries.map((entry) => {
             const isOwnPost = entry.authorId === currentUser.id;
             const hasReactedResonance = entry.userReactions.includes('resonance');
@@ -285,7 +285,7 @@ export const CommunityBlog: React.FC<CommunityBlogProps> = ({ onSelectEntry, onO
             return (
               <article
                 key={entry.id}
-                className="group relative bg-[#FCFBF9] border border-[#E4DDD2] hover:border-[#CFC4B5] rounded-2xl p-6 transition-all shadow-xs flex flex-col justify-between"
+                className="community-post group relative bg-[#FCFBF9] border border-[#E4DDD2] hover:border-[#CFC4B5] rounded-2xl p-6 transition-all shadow-xs flex flex-col justify-between"
               >
                 <div>
                   {/* Top Bar on Card: Author Information + Privacy Status */}

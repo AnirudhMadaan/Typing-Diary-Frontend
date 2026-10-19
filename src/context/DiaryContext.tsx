@@ -362,13 +362,35 @@ export const DiaryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setEntries((previous) => previous.filter((entry) => entry.id !== entryId));
   }), [withError]);
 
-  const toggleReaction = useCallback((entryId: string, type: string) => withError(async () => {
-    const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/reactions`, {
-      method: 'POST',
-      body: JSON.stringify({ type }),
-    });
-    applyEntry(result.entry);
-  }), [applyEntry, withError]);
+  const toggleReaction = useCallback(async (entryId: string, type: string) => {
+    // Optimistically update the feed so a like feels instant; reconcile with
+    // the server response and restore the original entry if the request fails.
+    const previous = entries.find((entry) => entry.id === entryId);
+    if (!previous) return;
+    const alreadyReacted = previous.userReactions.includes(type);
+    const previousCount = Number(previous.reactions[type as keyof DiaryEntry['reactions']] || 0);
+    const optimistic: DiaryEntry = {
+      ...previous,
+      userReactions: alreadyReacted
+        ? previous.userReactions.filter((reaction) => reaction !== type)
+        : [...previous.userReactions, type],
+      reactions: {
+        ...previous.reactions,
+        [type]: Math.max(0, previousCount + (alreadyReacted ? -1 : 1)),
+      },
+    };
+    applyEntry(optimistic);
+    try {
+      const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/reactions`, {
+        method: 'POST',
+        body: JSON.stringify({ type }),
+      });
+      applyEntry(result.entry);
+    } catch (error) {
+      applyEntry(previous);
+      throw error;
+    }
+  }, [entries, applyEntry]);
 
   const addComment = useCallback((entryId: string, text: string, isAnonymous = false) => withError(async () => {
     const result = await api<{ entry: DiaryEntry }>(`/api/entries/${encodeURIComponent(entryId)}/comments`, {

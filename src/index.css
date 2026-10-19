@@ -394,3 +394,91 @@ button, [role="button"] { touch-action: manipulation; }
 @supports (padding: max(0px)) {
   body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 }
+
+
+/* Community refresh: clearer hierarchy, calmer surfaces, and responsive polish.
+   Motion remains intact; only decorative paint and expensive hover shadows are restrained. */
+.community-page {
+  --community-ink: #28271f;
+  --community-muted: #747568;
+  --community-accent: #667b57;
+  color: var(--community-ink);
+}
+.community-page > section:first-child {
+  background:
+    radial-gradient(ellipse at 85% 8%, rgba(210, 218, 190, .28), transparent 38%),
+    #f7f7f0;
+  border-color: #e4e6d9;
+}
+.community-page h1 {
+  letter-spacing: -.045em;
+  max-width: 12ch;
+}
+.community-page section:first-child p {
+  color: #65675c;
+  max-width: 42rem;
+}
+.community-page section:first-child button:first-child,
+.community-page button[class*="bg-[#2B2621]"] {
+  background: #465b3d;
+  box-shadow: 0 5px 14px rgba(49, 67, 40, .12);
+}
+.community-page section:first-child button:first-child:hover,
+.community-page button[class*="bg-[#2B2621]"]:hover {
+  background: #35482e;
+}
+.community-page section:first-child button:nth-child(2) {
+  background: #e9eddf;
+  border-color: #d8dfcb;
+  color: #405239;
+}
+.community-page section:first-child button:nth-child(2):hover {
+  background: #dfe6d3;
+}
+.community-page section:first-child > div > div:last-child {
+  border-color: #dfe3d4;
+  box-shadow: 0 12px 32px rgba(49, 53, 39, .08);
+}
+.community-page .community-feed {
+  align-items: stretch;
+}
+.community-page .community-post {
+  border-color: #e5e6dc;
+  border-radius: 1.25rem;
+  box-shadow: 0 2px 7px rgba(42, 44, 33, .025);
+  content-visibility: auto;
+  contain-intrinsic-size: 390px;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+.community-page .community-post:hover {
+  transform: translateY(-2px);
+  border-color: #cbd4bd;
+  box-shadow: 0 10px 28px rgba(42, 44, 33, .065);
+}
+.community-page .community-post h2 {
+  letter-spacing: -.025em;
+}
+.community-page .community-post > div:last-child {
+  border-color: #ecece3;
+}
+.community-page input,
+.community-page select {
+  border-color: #e0e2d7;
+  border-radius: .8rem;
+}
+.community-page button:focus-visible,
+.community-page input:focus-visible,
+.community-page select:focus-visible {
+  outline: 2px solid #82956f;
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .community-page { gap: 1.5rem; }
+  .community-page > section:first-child { padding-top: 1.5rem; padding-bottom: 1.75rem; }
+  .community-page h1 { font-size: clamp(2rem, 8vw, 2.7rem); }
+  .community-page .community-post { padding: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .community-page .community-post { transition: border-color 180ms ease, box-shadow 180ms ease; }
+  .community-page .community-post:hover { transform: none; }
+}
